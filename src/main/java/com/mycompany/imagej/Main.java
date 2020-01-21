@@ -7,9 +7,12 @@ import net.imglib2.RandomAccessibleInterval;
 import net.imglib2.img.Img;
 import net.imglib2.type.numeric.integer.UnsignedByteType;
 import net.imglib2.type.numeric.real.DoubleType;
+import net.imglib2.view.IterableRandomAccessibleInterval;
 import net.imglib2.view.Views;
+import org.scijava.io.location.FileLocation;
 
-import java.io.IOException;
+import java.io.BufferedOutputStream;
+import java.io.FileOutputStream;
 
 
 public class Main {
@@ -30,7 +33,8 @@ public class Main {
         SCIFIOConfig conf = new SCIFIOConfig();
         conf.imgOpenerSetComputeMinMax(false);
         conf.imgOpenerSetImgModes(SCIFIOConfig.ImgMode.CELL);
-        Img<UnsignedByteType> img = IO.openImgs(args[0], new UnsignedByteType(), conf).get(0);
+        //Img<UnsignedByteType> img = IO.openImgs(args[0], new UnsignedByteType(), conf).get(0);
+        Img<UnsignedByteType> img = IO.open(new FileLocation(args[0]), new UnsignedByteType(), conf).get(0);
         System.out.println(img);
 
         convolve(ij, img);
@@ -38,16 +42,28 @@ public class Main {
         System.exit(0);
     }
 
-    private static void convolve(ImageJ ij, RandomAccessibleInterval<UnsignedByteType> img) throws IOException {
+    private static void convolve(ImageJ ij, RandomAccessibleInterval<UnsignedByteType> img) throws Exception {
         int kernel_size = 3;
         RandomAccessibleInterval<DoubleType> kernel = ij.op().create().kernel(identity(kernel_size), new DoubleType());
 
         RandomAccessibleInterval<UnsignedByteType> result = ij.op().create().img(img);
         ij.op().filter().convolve(result, Views.extendMirrorSingle(img), kernel);
         if(MPIUtils.isRoot()) {
-            ij.io().save(ij.dataset().create(result), "result.tif");
+            saveImage("result/result.pgm", result);
         }
-        ij.io().save(ij.dataset().create(result), "result" + MPIUtils.getRank() + ".tif");
+        saveImage("result/result" + MPIUtils.getRank() + ".pgm", result);
     }
 
+    private static void saveImage(String path, RandomAccessibleInterval img) throws Exception {
+        // ij.io().save(ij.dataset().create(result), "result.tif");
+
+        BufferedOutputStream out = new BufferedOutputStream(new FileOutputStream(path), 1024 * 1024 * 512);
+        String header = "P5\n" + img.dimension(0) + " " + img.dimension(1) + "\n255\n";
+        out.write(header.getBytes());
+        for (Object o : new IterableRandomAccessibleInterval<>(img)) {
+            UnsignedByteType b = (UnsignedByteType) o;
+            out.write((byte) b.get());
+        }
+        out.close();
+    }
 }

@@ -20,6 +20,10 @@
             <id>scijava.public</id>
             <url>https://maven.scijava.org/content/groups/public</url>
         </repository>
+        <repository>
+            <id>jitpack.io</id>
+            <url>https://jitpack.io</url>
+        </repository>
     </repositories>
 
     <build>
@@ -47,6 +51,19 @@
             <groupId>net.imagej</groupId>
             <artifactId>imagej</artifactId>
             <version>2.0.0-rc-69</version>
+
+            <exclusions>
+                <exclusion>
+                    <groupId>io.scif</groupId>
+                    <artifactId>scifio</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>org.scijava</groupId>
+                    <artifactId>scijava-common</artifactId>
+                </exclusion>
+            </exclusions>
+
+
         </dependency>
 
         <dependency>
@@ -59,6 +76,37 @@
             <groupId>net.java.dev.jna</groupId>
             <artifactId>jna</artifactId>
             <version>5.5.0</version>
+        </dependency>
+
+        <dependency>
+            <groupId>com.github.trnila</groupId>
+            <artifactId>scifio</artifactId>
+            <version>e1ef5204c619726d9cf26bee0aa2cf72e5ee17e1</version>
+            <exclusions>
+                <exclusion>
+                    <groupId>org.scijava</groupId>
+                    <artifactId>scijava-common</artifactId>
+                </exclusion>
+            </exclusions>
+
+        </dependency>
+
+        <dependency>
+            <groupId>com.github.trnila</groupId>
+            <artifactId>scijava-common</artifactId>
+            <version>d3d14176cadb06c026d8964cbb034eff4226d78b</version>
+        </dependency>
+
+        <dependency>
+            <groupId>net.imglib2</groupId>
+            <artifactId>imglib2-cache</artifactId>
+            <version>1.0.0-beta-13</version>
+        </dependency>
+
+        <dependency>
+            <groupId>io.scif</groupId>
+            <artifactId>scifio-jai-imageio</artifactId>
+            <version>1.1.1</version>
         </dependency>
     </dependencies>
 </project>
