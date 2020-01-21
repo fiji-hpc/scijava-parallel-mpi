@@ -1,5 +1,6 @@
 package com.mycompany.imagej;
 
+import io.scif.config.SCIFIOConfig;
 import io.scif.img.IO;
 import net.imagej.ImageJ;
 import net.imglib2.RandomAccessibleInterval;
@@ -26,7 +27,11 @@ public class Main {
     public static void main(String[] args) throws Exception{
         ImageJ ij = new ImageJ();
 
-        Img<UnsignedByteType> img = IO.openImgs("./lena.png", new UnsignedByteType()).get(0);
+        SCIFIOConfig conf = new SCIFIOConfig();
+        conf.imgOpenerSetComputeMinMax(false);
+        conf.imgOpenerSetImgModes(SCIFIOConfig.ImgMode.CELL);
+        Img<UnsignedByteType> img = IO.openImgs(args[0], new UnsignedByteType(), conf).get(0);
+        System.out.println(img);
 
         convolve(ij, img);
 
@@ -40,8 +45,9 @@ public class Main {
         RandomAccessibleInterval<UnsignedByteType> result = ij.op().create().img(img);
         ij.op().filter().convolve(result, Views.extendMirrorSingle(img), kernel);
         if(MPIUtils.isRoot()) {
-            ij.io().save(ij.dataset().create(result), "result.png");
+            ij.io().save(ij.dataset().create(result), "result.tif");
         }
+        ij.io().save(ij.dataset().create(result), "result" + MPIUtils.getRank() + ".tif");
     }
 
 }

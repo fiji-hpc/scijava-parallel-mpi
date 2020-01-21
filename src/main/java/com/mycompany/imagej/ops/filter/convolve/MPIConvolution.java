@@ -92,10 +92,9 @@ public class MPIConvolution<I extends RealType<I>, K extends RealType<K>, O exte
 
                 int sent = 0;
                 while(sent < block_rows) {
-                    Utils.rootPrint(block_rows);
                     int cell_rows = img.getCellGrid().getCellDimension(1, lastCell);
-                    int length = Math.min(block_rows - sent, cell_rows) - cell_off;
-                  //  Utils.print(block + " cell=" + lastCell + " cell_ofset=" + cell_off + " length=" + length + "; node=" + i);
+                    int length = Math.min(block_rows - sent, cell_rows - cell_off);
+                    // Utils.print(block + " cell=" + lastCell + " cell_ofset=" + cell_off + " length=" + length + "; node=" + i);
 
                     byte[] data = ((DirtyVolatileByteArray) c.getData()).getCurrentStorageArray();
 
