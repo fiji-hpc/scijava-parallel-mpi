@@ -1,22 +1,15 @@
 package com.mycompany.imagej;
 
-import io.scif.config.SCIFIOConfig;
-import io.scif.img.IO;
+import net.imagej.Dataset;
 import net.imagej.ImageJ;
 import net.imglib2.RandomAccessibleInterval;
-import net.imglib2.img.Img;
-import net.imglib2.type.numeric.integer.UnsignedByteType;
+import net.imglib2.type.numeric.RealType;
 import net.imglib2.type.numeric.real.DoubleType;
-import net.imglib2.view.IterableRandomAccessibleInterval;
 import net.imglib2.view.Views;
-import org.scijava.io.location.FileLocation;
-
-import java.io.BufferedOutputStream;
-import java.io.FileOutputStream;
 
 
 public class Main {
-    static double[][] identity(int size) {
+    static double[][] identityKernel(int size) {
         double [][] kernel = new double[size][size];
         for(int r = 0; r < size; r++) {
             for(int c = 0; c < size; c++) {
@@ -27,43 +20,36 @@ public class Main {
         return kernel;
     }
 
+    static double[][] edgeKernel() {
+        return new double[][]{
+            new double[]{-1, -1, -1},
+            new double[]{-1, 8, -1},
+            new double[]{-1, -1, -1},
+        };
+    }
+
     public static void main(String[] args) throws Exception{
         ImageJ ij = new ImageJ();
+        Dataset input =  ij.scifio().datasetIO().open(args[0]);
+        RandomAccessibleInterval output = ij.op().create().img(input);
 
-        SCIFIOConfig conf = new SCIFIOConfig();
-        conf.imgOpenerSetComputeMinMax(false);
-        conf.imgOpenerSetImgModes(SCIFIOConfig.ImgMode.CELL);
-        //Img<UnsignedByteType> img = IO.openImgs(args[0], new UnsignedByteType(), conf).get(0);
-        Img<UnsignedByteType> img = IO.open(new FileLocation(args[0]), new UnsignedByteType(), conf).get(0);
-        System.out.println(img);
+//        ij.op().run(MPIRankColor.class, output, input);
+//        convolve(ij, output, (RandomAccessibleInterval) input, edgeKernel());
+        convolve(ij, output, (RandomAccessibleInterval) input, identityKernel(3));
 
-        convolve(ij, img);
+        if(MPIUtils.isRoot()) {
+            ij.scifio().datasetIO().save(ij.dataset().create(output), "result.tif");
+        }
 
         System.exit(0);
     }
 
-    private static void convolve(ImageJ ij, RandomAccessibleInterval<UnsignedByteType> img) throws Exception {
-        int kernel_size = 3;
-        RandomAccessibleInterval<DoubleType> kernel = ij.op().create().kernel(identity(kernel_size), new DoubleType());
-
-        RandomAccessibleInterval<UnsignedByteType> result = ij.op().create().img(img);
-        ij.op().filter().convolve(result, Views.extendMirrorSingle(img), kernel);
-        if(MPIUtils.isRoot()) {
-            saveImage("result/result.pgm", result);
-        }
-        saveImage("result/result" + MPIUtils.getRank() + ".pgm", result);
+    private static <O extends RealType<O>> void convolve(ImageJ ij, RandomAccessibleInterval<O> output, RandomAccessibleInterval<O> input, double[][] kernel) {
+        ij.op().filter().convolve(
+                output,
+                Views.extendMirrorSingle(input),
+                ij.op().create().kernel(kernel, new DoubleType())
+        );
     }
 
-    private static void saveImage(String path, RandomAccessibleInterval img) throws Exception {
-        // ij.io().save(ij.dataset().create(result), "result.tif");
-
-        BufferedOutputStream out = new BufferedOutputStream(new FileOutputStream(path), 1024 * 1024 * 512);
-        String header = "P5\n" + img.dimension(0) + " " + img.dimension(1) + "\n255\n";
-        out.write(header.getBytes());
-        for (Object o : new IterableRandomAccessibleInterval<>(img)) {
-            UnsignedByteType b = (UnsignedByteType) o;
-            out.write((byte) b.get());
-        }
-        out.close();
-    }
 }

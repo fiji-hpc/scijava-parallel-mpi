@@ -5,10 +5,13 @@ import com.mycompany.imagej.Utils;
 import net.imagej.ops.Contingent;
 import net.imagej.ops.Ops;
 import net.imagej.ops.special.computer.AbstractUnaryComputerOp;
+import net.imglib2.RandomAccess;
 import net.imglib2.RandomAccessible;
 import net.imglib2.RandomAccessibleInterval;
+import net.imglib2.algorithm.convolution.kernel.Kernel1D;
+import net.imglib2.algorithm.convolution.kernel.SeparableKernelConvolution;
 import net.imglib2.type.numeric.RealType;
-import net.imglib2.view.IterableRandomAccessibleInterval;
+import net.imglib2.util.Intervals;
 import org.scijava.Priority;
 import org.scijava.plugin.Parameter;
 import org.scijava.plugin.Plugin;
@@ -17,9 +20,9 @@ import java.util.List;
 
 @Plugin(type = Ops.Filter.Convolve.class, priority = Priority.HIGH + 2)
 public class MPIConvolution<I extends RealType<I>, K extends RealType<K>, O extends RealType<O>>
-            extends
-            AbstractUnaryComputerOp<RandomAccessible<I>, RandomAccessibleInterval<O>>
-            implements Ops.Filter.Convolve, Contingent
+        extends
+        AbstractUnaryComputerOp<RandomAccessible<I>, RandomAccessibleInterval<O>>
+        implements Ops.Filter.Convolve, Contingent
 {
     @Parameter
     private RandomAccessibleInterval<K> kernel;
@@ -34,14 +37,25 @@ public class MPIConvolution<I extends RealType<I>, K extends RealType<K>, O exte
         List<RandomAccessibleInterval<O>> blocks = Utils.splitAll(output);
 
         RandomAccessibleInterval<O> my_block = blocks.get(MPIUtils.getRank());
-        Utils.print(my_block);
-
-        int offset = 30;
-        int value = offset + (255 - offset) / MPIUtils.getSize() * MPIUtils.getRank();
-        for(O b: new IterableRandomAccessibleInterval<O>(my_block)) {
-            b.setReal(value);
-        }
+        SeparableKernelConvolution.convolution(createKernel(kernel))
+                .process(input, my_block);
 
         Utils.gather(output, blocks);
     }
+
+     private static <K extends RealType<K>> Kernel1D createKernel(RandomAccessibleInterval<K> kernel) {
+          RandomAccess<K> it = kernel.randomAccess();
+          double[] kernel_values = new double[(int) Intervals.numElements(kernel)];
+          int i = 0;
+          for(long r = kernel.min(1); r <= kernel.max(1); r++) {
+              for(long c = kernel.min(0); c <= kernel.max(0); c++) {
+                  kernel_values[i++] = it.get().getRealDouble();
+                  it.fwd(0);
+              }
+              it.setPosition(new long[]{0L, kernel.min(0)});
+              it.fwd(1);
+          }
+
+          return Kernel1D.centralAsymmetric(kernel_values);
+      }
 }
