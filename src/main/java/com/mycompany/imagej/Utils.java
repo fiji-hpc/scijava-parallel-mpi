@@ -71,117 +71,126 @@ public class Utils {
         }
 
         if(output instanceof ArrayImg) {
-            ArrayImg img = (ArrayImg) output;
-            int off = 0;
-            for(int i = 0; i < blocks.size(); i++) {
-                RandomAccessibleInterval<O> block = blocks.get(i);
-                byte[] data = ((ByteArray) img.update(null)).getCurrentStorageArray();
-                int length = (int) Intervals.numElements(block);
+            gatherImg(blocks, (ArrayImg) output);
+        } else if(output instanceof SCIFIOCellImg) {
+            gatherCells(blocks, (SCIFIOCellImg) output);
+        } else if(output instanceof PlanarImg) {
+            gatherPlanar(blocks, (PlanarImg) output);
+        } else {
+            throw new RuntimeException("Unsupported!" + output.getClass());
+        }
+    }
+
+    private static <O extends RealType<O>> void gatherPlanar(List<RandomAccessibleInterval<O>> blocks, PlanarImg img) {
+        int cols = (int) img.dimension(0);
+
+        int cell_off = 0;
+        ByteArray c = (ByteArray) img.getPlane(0);
+        long lastCell = 0;
+        for(int i = 0; i < blocks.size(); i++) {
+            RandomAccessibleInterval<O> block = blocks.get(i);
+            int block_rows = (int) block.dimension(1);
+            int total_rows = block_rows;
+            if(block.numDimensions() > 2) {
+                total_rows *= (int) block.dimension(2);
+            }
+
+            int sent = 0;
+            while(sent < total_rows) {
+                int cell_rows = (int) img.dimension(1);
+                int length = Math.min(total_rows - sent, cell_rows - cell_off);
+                print(block + " cell=" + lastCell + " cell_ofset=" + cell_off + " length=" + length + "; node=" + i);
+
+                byte[] data = c.getCurrentStorageArray();
 
                 int ret = MPIUtils.MPILibrary.INSTANCE.MPI_Bcast(
-                        ByteBuffer.wrap(data, off, length).slice(),
-                        length, MPIUtils.MPI_BYTE, i, MPIUtils.MPI_COMM_WORLD);
+                        ByteBuffer.wrap(data, cell_off * cols, cols * length).slice(),
+                        cols * length, MPIUtils.MPI_BYTE, i, MPIUtils.MPI_COMM_WORLD);
                 if(ret != 0) {
                     throw new RuntimeException("mpi failed");
                 }
-                off += length;
-            }
-        } else if(output instanceof SCIFIOCellImg) {
-            SCIFIOCellImg img = (SCIFIOCellImg) output;
-            rootPrint(img.getCellGrid());
 
-            int cols = (int) img.dimension(0);
-
-            int cell_off = 0;
-            Cell c = get(img, 0);
-            long lastCell = 0;
-            for(int i = 0; i < blocks.size(); i++) {
-                RandomAccessibleInterval<O> block = blocks.get(i);
-                int block_rows = (int) block.dimension(1);
-
-                int sent = 0;
-                while(sent < block_rows) {
-                    int cell_rows = img.getCellGrid().getCellDimension(1, lastCell);
-                    int length = Math.min(block_rows - sent, cell_rows - cell_off);
-                    print(block + " cell=" + lastCell + " cell_ofset=" + cell_off + " length=" + length + "; node=" + i);
-
-                    byte[] data = ((DirtyVolatileByteArray) c.getData()).getCurrentStorageArray();
-
-                    int ret = MPIUtils.MPILibrary.INSTANCE.MPI_Bcast(
-                            ByteBuffer.wrap(data, cell_off * cols, cols * length).slice(),
-                            cols * length, MPIUtils.MPI_BYTE, i, MPIUtils.MPI_COMM_WORLD);
-                    if(ret != 0) {
-                        throw new RuntimeException("mpi failed");
-                    }
-                    ((DirtyVolatileByteArray) c.getData()).setDirty();
-
-                    cell_off += length;
-                    if(cell_off > cell_rows) {
-                        System.out.println("UNEXPECTED");
+                cell_off += length;
+                if(cell_off > cell_rows) {
+                    System.out.println("UNEXPECTED");
 //                        throw new RuntimeException("UNEXPECTED");
-                    }
-                    if(cell_off == cell_rows) {
-                        lastCell++;
-                        cell_off = 0;
-
-                        c = get(img, lastCell);
-                    }
-
-                    sent += length;
                 }
+                if(cell_off == cell_rows) {
+                    lastCell++;
+                    cell_off = 0;
+
+                    if(lastCell < img.numSlices()) {
+                        c = (ByteArray) img.getPlane((int) lastCell);
+                    }
+                }
+
+                sent += length;
             }
-        } else if(output instanceof PlanarImg) {
-            PlanarImg img = (PlanarImg) output;
-            int cols = (int) img.dimension(0);
+        }
+        if(lastCell != img.numSlices()) {
+           print("nope");
+        }
+    }
 
-            int cell_off = 0;
-            ByteArray c = (ByteArray) img.getPlane(0);
-            long lastCell = 0;
-            for(int i = 0; i < blocks.size(); i++) {
-                RandomAccessibleInterval<O> block = blocks.get(i);
-                int block_rows = (int) block.dimension(1);
-                int total_rows = block_rows;
-                if(block.numDimensions() > 2) {
-                    total_rows *= (int) block.dimension(2);
+    private static <O extends RealType<O>> void gatherCells(List<RandomAccessibleInterval<O>> blocks, SCIFIOCellImg img) {
+        rootPrint(img.getCellGrid());
+
+        int cols = (int) img.dimension(0);
+
+        int cell_off = 0;
+        Cell c = get(img, 0);
+        long lastCell = 0;
+        for(int i = 0; i < blocks.size(); i++) {
+            RandomAccessibleInterval<O> block = blocks.get(i);
+            int block_rows = (int) block.dimension(1);
+
+            int sent = 0;
+            while(sent < block_rows) {
+                int cell_rows = img.getCellGrid().getCellDimension(1, lastCell);
+                int length = Math.min(block_rows - sent, cell_rows - cell_off);
+                print(block + " cell=" + lastCell + " cell_ofset=" + cell_off + " length=" + length + "; node=" + i);
+
+                byte[] data = ((DirtyVolatileByteArray) c.getData()).getCurrentStorageArray();
+
+                int ret = MPIUtils.MPILibrary.INSTANCE.MPI_Bcast(
+                        ByteBuffer.wrap(data, cell_off * cols, cols * length).slice(),
+                        cols * length, MPIUtils.MPI_BYTE, i, MPIUtils.MPI_COMM_WORLD);
+                if(ret != 0) {
+                    throw new RuntimeException("mpi failed");
                 }
+                ((DirtyVolatileByteArray) c.getData()).setDirty();
 
-                int sent = 0;
-                while(sent < total_rows) {
-                    int cell_rows = (int) img.dimension(1);
-                    int length = Math.min(total_rows - sent, cell_rows - cell_off);
-                    print(block + " cell=" + lastCell + " cell_ofset=" + cell_off + " length=" + length + "; node=" + i);
-
-                    byte[] data = c.getCurrentStorageArray();
-
-                    int ret = MPIUtils.MPILibrary.INSTANCE.MPI_Bcast(
-                            ByteBuffer.wrap(data, cell_off * cols, cols * length).slice(),
-                            cols * length, MPIUtils.MPI_BYTE, i, MPIUtils.MPI_COMM_WORLD);
-                    if(ret != 0) {
-                        throw new RuntimeException("mpi failed");
-                    }
-
-                    cell_off += length;
-                    if(cell_off > cell_rows) {
-                        System.out.println("UNEXPECTED");
+                cell_off += length;
+                if(cell_off > cell_rows) {
+                    System.out.println("UNEXPECTED");
 //                        throw new RuntimeException("UNEXPECTED");
-                    }
-                    if(cell_off == cell_rows) {
-                        lastCell++;
-                        cell_off = 0;
-
-                        if(lastCell < img.numSlices()) {
-                            c = (ByteArray) img.getPlane((int) lastCell);
-                        }
-                    }
-
-                    sent += length;
                 }
+                if(cell_off == cell_rows) {
+                    lastCell++;
+                    cell_off = 0;
+
+                    c = get(img, lastCell);
+                }
+
+                sent += length;
             }
-            if(lastCell != img.numSlices()) {
-               print("nope");
+        }
+    }
+
+    private static <O extends RealType<O>> void gatherImg(List<RandomAccessibleInterval<O>> blocks, ArrayImg img) {
+        int off = 0;
+        for(int i = 0; i < blocks.size(); i++) {
+            RandomAccessibleInterval<O> block = blocks.get(i);
+            byte[] data = ((ByteArray) img.update(null)).getCurrentStorageArray();
+            int length = (int) Intervals.numElements(block);
+
+            int ret = MPIUtils.MPILibrary.INSTANCE.MPI_Bcast(
+                    ByteBuffer.wrap(data, off, length).slice(),
+                    length, MPIUtils.MPI_BYTE, i, MPIUtils.MPI_COMM_WORLD);
+            if(ret != 0) {
+                throw new RuntimeException("mpi failed");
             }
-        } else {
-            throw new RuntimeException("Unsupported!" + output.getClass());
+            off += length;
         }
     }
 
