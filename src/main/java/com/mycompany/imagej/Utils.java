@@ -140,7 +140,10 @@ public class Utils {
             for(int i = 0; i < blocks.size(); i++) {
                 RandomAccessibleInterval<O> block = blocks.get(i);
                 int block_rows = (int) block.dimension(1);
-                int total_rows = block_rows * (int) block.dimension(2);
+                int total_rows = block_rows;
+                if(block.numDimensions() > 2) {
+                    total_rows *= (int) block.dimension(2);
+                }
 
                 int sent = 0;
                 while(sent < total_rows) {
