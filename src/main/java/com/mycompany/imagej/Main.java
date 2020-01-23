@@ -8,16 +8,18 @@ import net.imglib2.type.numeric.RealType;
 import net.imglib2.type.numeric.real.DoubleType;
 import net.imglib2.view.Views;
 
+import static com.mycompany.imagej.Measure.measure;
+
 
 public class Main {
     static double[][] identityKernel(int size) {
         double [][] kernel = new double[size][size];
         for(int r = 0; r < size; r++) {
             for(int c = 0; c < size; c++) {
-                kernel[r][c] = 0;
+                kernel[r][c] = 1.0 / (size * size);
             }
         }
-        kernel[size / 2][size / 2] = 1;
+//        kernel[size / 2][size / 2] = 1;
         return kernel;
     }
 
@@ -40,23 +42,32 @@ public class Main {
             String outputPath = args[2];
 
             ImageJ ij = new ImageJ();
-            Dataset input = ij.scifio().datasetIO().open(inputPath);
+            Dataset input = measure("read", () -> ij.scifio().datasetIO().open(inputPath));
 
             RandomAccessibleInterval output = ij.op().create().img(input);
 
-            if(op.equals("rank_color")) {
-                ij.op().run(MPIRankColor.class, output, input);
-            } else if(op.equals("edge_convolution")) {
-                convolve(ij, output, (RandomAccessibleInterval) input, edgeKernel());
-            } else if(op.equals("identity_convolution")) {
-                convolve(ij, output, (RandomAccessibleInterval) input, identityKernel(3));
-            } else {
-                System.err.println("Unknown op: " + op);
-                System.exit(1);
+            int rounds = 1;
+            if(System.getenv("ROUNDS") != null) {
+                rounds = Integer.parseInt(System.getenv("ROUNDS"));
+            }
+            for(int i = 0; i < rounds; i++) {
+                if (op.equals("rank_color")) {
+                    ij.op().run(MPIRankColor.class, output, input);
+                } else if (op.equals("edge_convolution")) {
+                    convolve(ij, output, (RandomAccessibleInterval) input, edgeKernel());
+                } else if (op.equals("identity_convolution")) {
+                    convolve(ij, output, (RandomAccessibleInterval) input, identityKernel(3));
+                } else {
+                    System.err.println("Unknown op: " + op);
+                    System.exit(1);
+                }
+                Measure.nextRound();
             }
 
             if (MPIUtils.isRoot()) {
-                ij.scifio().datasetIO().save(ij.dataset().create(output), outputPath);
+                measure("write", () -> {
+                    ij.scifio().datasetIO().save(ij.dataset().create(output), outputPath);
+                });
             }
         } catch(Exception e) {
             e.printStackTrace();

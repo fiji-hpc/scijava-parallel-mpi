@@ -1,15 +1,20 @@
 package com.mycompany.imagej;
 
 import java.io.FileOutputStream;
-import java.nio.channels.FileLock;
 
 public class Measure {
+    private static int round = 0;
+
     public interface Runnable {
         void run() throws Exception;
     }
 
     public interface Supplier<T> {
         T run() throws Exception;
+    }
+
+    public static void nextRound() {
+        round++;
     }
 
     public static <T> T measure(String desc, Supplier<T> cb) throws Exception {
@@ -19,9 +24,9 @@ public class Measure {
         System.out.println(desc + ": " + time_ms / 1000.0 + "s");
 
         try(FileOutputStream out = new FileOutputStream("stats.csv", true)) {
-            FileLock lock = out.getChannel().lock();
-            out.write((desc + "," + MPIUtils.getRank() + "," + MPIUtils.getSize() + "," + time_ms + "\n").getBytes());
-            lock.release();
+  //          FileLock lock = out.getChannel().lock();
+            out.write((desc + "," + MPIUtils.getRank() + "," + MPIUtils.getSize() + "," + round + "," + time_ms + "\n").getBytes());
+//            lock.release();
         }
 
         return ret;
