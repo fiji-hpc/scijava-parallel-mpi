@@ -11,6 +11,8 @@ import org.scijava.plugin.Plugin;
 
 import java.util.List;
 
+import static com.mycompany.imagej.Measure.measureCatch;
+
 @Plugin(type = MPIRankColor.class)
 public class DefaultMPIRankColor<I extends RealType<I>, O extends RealType<O>>
         extends
@@ -23,11 +25,13 @@ public class DefaultMPIRankColor<I extends RealType<I>, O extends RealType<O>>
         RandomAccessibleInterval<O> my_block = blocks.get(MPIUtils.getRank());
         Utils.print(my_block);
 
-        int offset = 30;
-        int value = offset + (255 - offset) / MPIUtils.getSize() * MPIUtils.getRank();
-        for(O b: new IterableRandomAccessibleInterval<O>(my_block)) {
-            b.setReal(value);
-        }
+        measureCatch("coloring", () -> {
+            int offset = 30;
+            int value = offset + (255 - offset) / MPIUtils.getSize() * MPIUtils.getRank();
+            for (O b : new IterableRandomAccessibleInterval<O>(my_block)) {
+                b.setReal(value);
+            }
+        });
 
         Utils.gather(output, blocks);
     }

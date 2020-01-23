@@ -1,5 +1,6 @@
 package com.mycompany.imagej;
 
+import com.mycompany.imagej.ops.MPIRankColor;
 import net.imagej.Dataset;
 import net.imagej.ImageJ;
 import net.imglib2.RandomAccessibleInterval;
@@ -28,17 +29,38 @@ public class Main {
         };
     }
 
-    public static void main(String[] args) throws Exception{
-        ImageJ ij = new ImageJ();
-        Dataset input =  ij.scifio().datasetIO().open(args[0]);
-        RandomAccessibleInterval output = ij.op().create().img(input);
+    public static void main(String[] args) {
+        try {
+            if(args.length == 0) {
+                System.err.println("Missing operation argument");
+                System.exit(1);
+            }
+            String op = args[0];
+            String inputPath = args[1];
+            String outputPath = args[2];
 
-//        ij.op().run(MPIRankColor.class, output, input);
-//        convolve(ij, output, (RandomAccessibleInterval) input, edgeKernel());
-        convolve(ij, output, (RandomAccessibleInterval) input, identityKernel(3));
+            ImageJ ij = new ImageJ();
+            Dataset input = ij.scifio().datasetIO().open(inputPath);
 
-        if(MPIUtils.isRoot()) {
-            ij.scifio().datasetIO().save(ij.dataset().create(output), "result.tif");
+            RandomAccessibleInterval output = ij.op().create().img(input);
+
+            if(op.equals("rank_color")) {
+                ij.op().run(MPIRankColor.class, output, input);
+            } else if(op.equals("edge_convolution")) {
+                convolve(ij, output, (RandomAccessibleInterval) input, edgeKernel());
+            } else if(op.equals("identity_convolution")) {
+                convolve(ij, output, (RandomAccessibleInterval) input, identityKernel(3));
+            } else {
+                System.err.println("Unknown op: " + op);
+                System.exit(1);
+            }
+
+            if (MPIUtils.isRoot()) {
+                ij.scifio().datasetIO().save(ij.dataset().create(output), outputPath);
+            }
+        } catch(Exception e) {
+            e.printStackTrace();
+            System.exit(1);
         }
 
         System.exit(0);

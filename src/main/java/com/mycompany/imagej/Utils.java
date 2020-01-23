@@ -19,6 +19,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
 
+import static com.mycompany.imagej.Measure.measureCatch;
+
 public class Utils {
       public static <I> List<RandomAccessibleInterval<I>> splitAll(RandomAccessibleInterval<I> input) {
         int n = MPIUtils.getSize();
@@ -70,15 +72,18 @@ public class Utils {
             output = ((ImgPlus<O>) output).getImg();
         }
 
-        if(output instanceof ArrayImg) {
-            gatherImg(blocks, (ArrayImg) output);
-        } else if(output instanceof SCIFIOCellImg) {
-            gatherCells(blocks, (SCIFIOCellImg) output);
-        } else if(output instanceof PlanarImg) {
-            gatherPlanar(blocks, (PlanarImg) output);
-        } else {
-            throw new RuntimeException("Unsupported!" + output.getClass());
-        }
+        RandomAccessibleInterval<O> finalOutput = output;
+        measureCatch("gather", () -> {
+            if(finalOutput instanceof ArrayImg) {
+                gatherImg(blocks, (ArrayImg) finalOutput);
+            } else if(finalOutput instanceof SCIFIOCellImg) {
+                gatherCells(blocks, (SCIFIOCellImg) finalOutput);
+            } else if(finalOutput instanceof PlanarImg) {
+                gatherPlanar(blocks, (PlanarImg) finalOutput);
+            } else {
+                throw new RuntimeException("Unsupported!" + finalOutput.getClass());
+            }
+        });
     }
 
     private static <O extends RealType<O>> void gatherPlanar(List<RandomAccessibleInterval<O>> blocks, PlanarImg img) {

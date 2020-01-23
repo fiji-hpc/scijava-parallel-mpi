@@ -18,6 +18,8 @@ import org.scijava.plugin.Plugin;
 
 import java.util.List;
 
+import static com.mycompany.imagej.Measure.measureCatch;
+
 @Plugin(type = Ops.Filter.Convolve.class, priority = Priority.HIGH + 2)
 public class MPIConvolution<I extends RealType<I>, K extends RealType<K>, O extends RealType<O>>
         extends
@@ -37,8 +39,11 @@ public class MPIConvolution<I extends RealType<I>, K extends RealType<K>, O exte
         List<RandomAccessibleInterval<O>> blocks = Utils.splitAll(output);
 
         RandomAccessibleInterval<O> my_block = blocks.get(MPIUtils.getRank());
-        SeparableKernelConvolution.convolution(createKernel(kernel))
-                .process(input, my_block);
+        Utils.print(my_block);
+        measureCatch("convolution", () -> {
+            SeparableKernelConvolution.convolution(createKernel(kernel))
+                    .process(input, my_block);
+        });
 
         Utils.gather(output, blocks);
     }
