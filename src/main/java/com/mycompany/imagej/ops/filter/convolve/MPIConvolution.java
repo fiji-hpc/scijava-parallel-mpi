@@ -8,6 +8,7 @@ import net.imagej.ops.special.computer.AbstractUnaryComputerOp;
 import net.imglib2.RandomAccess;
 import net.imglib2.RandomAccessible;
 import net.imglib2.RandomAccessibleInterval;
+import net.imglib2.algorithm.convolution.Convolution;
 import net.imglib2.algorithm.convolution.kernel.Kernel1D;
 import net.imglib2.algorithm.convolution.kernel.SeparableKernelConvolution;
 import net.imglib2.type.numeric.RealType;
@@ -17,6 +18,7 @@ import org.scijava.plugin.Parameter;
 import org.scijava.plugin.Plugin;
 
 import java.util.List;
+import java.util.concurrent.Executors;
 
 import static com.mycompany.imagej.Measure.measureCatch;
 
@@ -41,8 +43,9 @@ public class MPIConvolution<I extends RealType<I>, K extends RealType<K>, O exte
         RandomAccessibleInterval<O> my_block = blocks.get(MPIUtils.getRank());
         Utils.print(my_block);
         measureCatch("convolution", () -> {
-            SeparableKernelConvolution.convolution(createKernel(kernel))
-                    .process(input, my_block);
+            Convolution convolution = SeparableKernelConvolution.convolution(createKernel(kernel));
+            convolution.setExecutor(Executors.newSingleThreadExecutor());
+            convolution.process(input, my_block);
         });
 
         Utils.gather(output, blocks);
