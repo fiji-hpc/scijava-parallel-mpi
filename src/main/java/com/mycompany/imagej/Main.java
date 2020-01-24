@@ -12,7 +12,7 @@ import static com.mycompany.imagej.Measure.measure;
 
 
 public class Main {
-    static double[][] identityKernel(int size) {
+    static double[][] boxBlurKernel(int size) {
         double [][] kernel = new double[size][size];
         for(int r = 0; r < size; r++) {
             for(int c = 0; c < size; c++) {
@@ -55,8 +55,8 @@ public class Main {
                     ij.op().run(MPIRankColor.class, output, input);
                 } else if (op.equals("edge_convolution")) {
                     convolve(ij, output, (RandomAccessibleInterval) input, edgeKernel());
-                } else if (op.equals("identity_convolution")) {
-                    convolve(ij, output, (RandomAccessibleInterval) input, identityKernel(3));
+                } else if (op.equals("boxblur_convolution")) {
+                    convolve(ij, output, (RandomAccessibleInterval) input, boxBlurKernel(30));
                 } else {
                     System.err.println("Unknown op: " + op);
                     System.exit(1);
