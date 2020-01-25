@@ -14,7 +14,6 @@ import net.imglib2.util.Intervals;
 import net.imglib2.view.IntervalView;
 import net.imglib2.view.Views;
 
-import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
@@ -89,6 +88,7 @@ public class Utils {
     private static <O extends RealType<O>> void gatherPlanar(List<RandomAccessibleInterval<O>> blocks, PlanarImg img) {
         int cols = (int) img.dimension(0);
 
+        NonBlockingBroadcast transfer = new NonBlockingBroadcast();
         int cell_off = 0;
         ByteArray c = (ByteArray) img.getPlane(0);
         long lastCell = 0;
@@ -106,19 +106,11 @@ public class Utils {
                 int length = Math.min(total_rows - sent, cell_rows - cell_off);
                 print(block + " cell=" + lastCell + " cell_ofset=" + cell_off + " length=" + length + "; node=" + i);
 
-                byte[] data = c.getCurrentStorageArray();
-
-                int ret = MPIUtils.MPILibrary.INSTANCE.MPI_Bcast(
-                        ByteBuffer.wrap(data, cell_off * cols, cols * length).slice(),
-                        cols * length, MPIUtils.MPI_BYTE, i, MPIUtils.MPI_COMM_WORLD);
-                if(ret != 0) {
-                    throw new RuntimeException("mpi failed");
-                }
+                transfer.requestTransfer(i, c.getCurrentStorageArray(), cell_off * cols, cols * length);
 
                 cell_off += length;
                 if(cell_off > cell_rows) {
-                    System.out.println("UNEXPECTED");
-//                        throw new RuntimeException("UNEXPECTED");
+                        throw new RuntimeException("UNEXPECTED");
                 }
                 if(cell_off == cell_rows) {
                     lastCell++;
@@ -133,8 +125,10 @@ public class Utils {
             }
         }
         if(lastCell != img.numSlices()) {
-           print("nope");
+            throw new RuntimeException("Unexpected");
         }
+
+        transfer.waitForTransfer();
     }
 
     private static <O extends RealType<O>> void gatherCells(List<RandomAccessibleInterval<O>> blocks, SCIFIOCellImg img) {
@@ -142,6 +136,7 @@ public class Utils {
 
         int cols = (int) img.dimension(0);
 
+        NonBlockingBroadcast transfer = new NonBlockingBroadcast();
         int cell_off = 0;
         Cell c = get(img, 0);
         long lastCell = 0;
@@ -157,18 +152,12 @@ public class Utils {
 
                 byte[] data = ((DirtyVolatileByteArray) c.getData()).getCurrentStorageArray();
 
-                int ret = MPIUtils.MPILibrary.INSTANCE.MPI_Bcast(
-                        ByteBuffer.wrap(data, cell_off * cols, cols * length).slice(),
-                        cols * length, MPIUtils.MPI_BYTE, i, MPIUtils.MPI_COMM_WORLD);
-                if(ret != 0) {
-                    throw new RuntimeException("mpi failed");
-                }
+                transfer.requestTransfer(i, data, cell_off * cols, cols * length);
                 ((DirtyVolatileByteArray) c.getData()).setDirty();
 
                 cell_off += length;
                 if(cell_off > cell_rows) {
-                    System.out.println("UNEXPECTED");
-//                        throw new RuntimeException("UNEXPECTED");
+                        throw new RuntimeException("UNEXPECTED");
                 }
                 if(cell_off == cell_rows) {
                     lastCell++;
@@ -180,23 +169,23 @@ public class Utils {
                 sent += length;
             }
         }
+
+        transfer.waitForTransfer();
     }
 
     private static <O extends RealType<O>> void gatherImg(List<RandomAccessibleInterval<O>> blocks, ArrayImg img) {
+        NonBlockingBroadcast transfer = new NonBlockingBroadcast();
         int off = 0;
         for(int i = 0; i < blocks.size(); i++) {
             RandomAccessibleInterval<O> block = blocks.get(i);
             byte[] data = ((ByteArray) img.update(null)).getCurrentStorageArray();
             int length = (int) Intervals.numElements(block);
 
-            int ret = MPIUtils.MPILibrary.INSTANCE.MPI_Bcast(
-                    ByteBuffer.wrap(data, off, length).slice(),
-                    length, MPIUtils.MPI_BYTE, i, MPIUtils.MPI_COMM_WORLD);
-            if(ret != 0) {
-                throw new RuntimeException("mpi failed");
-            }
+            transfer.requestTransfer(i, data, off, length);
             off += length;
         }
+
+        transfer.waitForTransfer();
     }
 
     public static Cell get(SCIFIOCellImg img, long index) {

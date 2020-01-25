@@ -1,9 +1,6 @@
 package com.mycompany.imagej;
 
-import com.sun.jna.Library;
-import com.sun.jna.Native;
-import com.sun.jna.NativeLibrary;
-import com.sun.jna.Pointer;
+import com.sun.jna.*;
 import com.sun.jna.ptr.PointerByReference;
 
 import java.nio.ByteBuffer;
@@ -105,6 +102,8 @@ public class MPIUtils {
         int MPI_Send(long buf, int count, Pointer datatype, int dest, int tag, Pointer comm);
         int MPI_Recv(long buf, int count, Pointer datatype, int dest, int tag, Pointer comm, Pointer status);
         int MPI_Bcast(ByteBuffer buffer, int count, Pointer datatype, int root, Pointer comm);
+        int MPI_Ibcast(Memory buffer, int count, Pointer datatype, int root, Pointer comm, PointerByReference request);
+        void MPI_Waitall(int count, Pointer[] requests, Pointer[] statuses);
     }
 
 }
