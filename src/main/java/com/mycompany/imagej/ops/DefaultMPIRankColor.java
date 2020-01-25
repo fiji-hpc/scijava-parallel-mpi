@@ -26,8 +26,9 @@ public class DefaultMPIRankColor<I extends RealType<I>, O extends RealType<O>>
         Utils.print(my_block);
 
         measureCatch("coloring", () -> {
-            int offset = 30;
-            int value = offset + (255 - offset) / MPIUtils.getSize() * MPIUtils.getRank();
+            double max = output.randomAccess().get().getMaxValue();
+            double offset = max * 0.1;
+            double value = offset + (max - offset) / MPIUtils.getSize() * MPIUtils.getRank();
             for (O b : new IterableRandomAccessibleInterval<O>(my_block)) {
                 b.setReal(value);
             }
