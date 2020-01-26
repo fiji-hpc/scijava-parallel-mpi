@@ -6,7 +6,6 @@ import net.imagej.ImgPlus;
 import net.imglib2.RandomAccessibleInterval;
 import net.imglib2.img.array.ArrayImg;
 import net.imglib2.img.basictypeaccess.array.ArrayDataAccess;
-import net.imglib2.img.basictypeaccess.array.ByteArray;
 import net.imglib2.img.basictypeaccess.volatiles.array.DirtyVolatileByteArray;
 import net.imglib2.img.cell.Cell;
 import net.imglib2.img.planar.PlanarImg;
@@ -118,7 +117,7 @@ public class Utils {
                     cell_off = 0;
 
                     if(lastCell < img.numSlices()) {
-                        c = (ByteArray) img.getPlane((int) lastCell);
+                        c = img.getPlane((int) lastCell);
                     }
                 }
 
