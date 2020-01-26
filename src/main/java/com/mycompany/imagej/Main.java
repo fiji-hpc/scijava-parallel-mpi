@@ -1,6 +1,7 @@
 package com.mycompany.imagej;
 
 import com.mycompany.imagej.ops.MPIRankColor;
+import io.scif.config.SCIFIOConfig;
 import net.imagej.Dataset;
 import net.imagej.ImageJ;
 import net.imglib2.RandomAccessibleInterval;
@@ -42,13 +43,14 @@ public class Main {
             String outputPath = args[2];
 
             ImageJ ij = new ImageJ();
-            Dataset input = measure("read", () -> ij.scifio().datasetIO().open(inputPath));
+            Dataset input = measure("read", () -> ij.scifio().datasetIO().open(inputPath, createSCIFIOConfig()));
+            Utils.rootPrint("Input image: " + input.getImgPlus().getImg());
 
             RandomAccessibleInterval output = ij.op().create().img(input);
 
             int rounds = 1;
-            if(System.getenv("ROUNDS") != null) {
-                rounds = Integer.parseInt(System.getenv("ROUNDS"));
+            if(System.getenv("B_ROUNDS") != null) {
+                rounds = Integer.parseInt(System.getenv("B_ROUNDS"));
             }
             for(int i = 0; i < rounds; i++) {
                 if (op.equals("rank_color")) {
@@ -75,6 +77,27 @@ public class Main {
         }
 
         System.exit(0);
+    }
+
+    private static SCIFIOConfig createSCIFIOConfig() {
+        SCIFIOConfig config = new SCIFIOConfig();
+        config.imgOpenerSetIndex(0);
+        config.imgOpenerSetComputeMinMax(false);
+        String inputType = System.getenv("B_IMG_MODE");
+        switch (inputType) {
+            case "CELL":
+                config.imgOpenerSetImgModes(SCIFIOConfig.ImgMode.CELL);
+                break;
+            case "ARRAY":
+                config.imgOpenerSetImgModes(SCIFIOConfig.ImgMode.ARRAY);
+                break;
+            case "PLANAR":
+                config.imgOpenerSetImgModes(SCIFIOConfig.ImgMode.PLANAR);
+                break;
+            default:
+                throw new RuntimeException("Unknown B_IMG_MODE: " + inputType);
+        }
+        return config;
     }
 
     private static <O extends RealType<O>> void convolve(ImageJ ij, RandomAccessibleInterval<O> output, RandomAccessibleInterval<O> input, double[][] kernel) {
