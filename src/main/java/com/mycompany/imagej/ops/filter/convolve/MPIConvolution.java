@@ -44,7 +44,9 @@ public class MPIConvolution<I extends RealType<I>, K extends RealType<K>, O exte
         Utils.print(my_block);
         measureCatch("convolution", () -> {
             Convolution convolution = SeparableKernelConvolution.convolution(createKernel(kernel));
-            convolution.setExecutor(Executors.newSingleThreadExecutor());
+            if(System.getenv("B_SINGLE_THREAD") != null) {
+                convolution.setExecutor(Executors.newSingleThreadExecutor());
+            }
             convolution.process(input, my_block);
         });
 
