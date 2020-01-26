@@ -58,7 +58,7 @@ public class Main {
                 } else if (op.equals("edge_convolution")) {
                     convolve(ij, output, (RandomAccessibleInterval) input, edgeKernel());
                 } else if (op.equals("boxblur_convolution")) {
-                    convolve(ij, output, (RandomAccessibleInterval) input, boxBlurKernel(30));
+                    convolve(ij, output, (RandomAccessibleInterval) input, boxBlurKernel(Integer.parseInt(System.getenv("B_KERNEL_SIZE"))));
                 } else {
                     System.err.println("Unknown op: " + op);
                     System.exit(1);
