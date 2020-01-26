@@ -5,6 +5,7 @@ import net.imagej.Dataset;
 import net.imagej.ImgPlus;
 import net.imglib2.RandomAccessibleInterval;
 import net.imglib2.img.array.ArrayImg;
+import net.imglib2.img.basictypeaccess.array.ArrayDataAccess;
 import net.imglib2.img.basictypeaccess.array.ByteArray;
 import net.imglib2.img.basictypeaccess.volatiles.array.DirtyVolatileByteArray;
 import net.imglib2.img.cell.Cell;
@@ -90,7 +91,7 @@ public class Utils {
 
         NonBlockingBroadcast transfer = new NonBlockingBroadcast();
         int cell_off = 0;
-        ByteArray c = (ByteArray) img.getPlane(0);
+        ArrayDataAccess<?> c = img.getPlane(0);
         long lastCell = 0;
         for(int i = 0; i < blocks.size(); i++) {
             RandomAccessibleInterval<O> block = blocks.get(i);
@@ -106,7 +107,7 @@ public class Utils {
                 int length = Math.min(total_rows - sent, cell_rows - cell_off);
                 print(block + " cell=" + lastCell + " cell_ofset=" + cell_off + " length=" + length + "; node=" + i);
 
-                transfer.requestTransfer(i, c.getCurrentStorageArray(), cell_off * cols, cols * length);
+                transfer.requestTransfer(i, c, cell_off * cols, cols * length);
 
                 cell_off += length;
                 if(cell_off > cell_rows) {
@@ -150,9 +151,7 @@ public class Utils {
                 int length = Math.min(block_rows - sent, cell_rows - cell_off);
                 print(block + " cell=" + lastCell + " cell_ofset=" + cell_off + " length=" + length + "; node=" + i);
 
-                byte[] data = ((DirtyVolatileByteArray) c.getData()).getCurrentStorageArray();
-
-                transfer.requestTransfer(i, data, cell_off * cols, cols * length);
+                transfer.requestTransfer(i, (ArrayDataAccess) c.getData(), cell_off * cols, cols * length);
                 ((DirtyVolatileByteArray) c.getData()).setDirty();
 
                 cell_off += length;
@@ -178,10 +177,9 @@ public class Utils {
         int off = 0;
         for(int i = 0; i < blocks.size(); i++) {
             RandomAccessibleInterval<O> block = blocks.get(i);
-            byte[] data = ((ByteArray) img.update(null)).getCurrentStorageArray();
             int length = (int) Intervals.numElements(block);
 
-            transfer.requestTransfer(i, data, off, length);
+            transfer.requestTransfer(i, (ArrayDataAccess) img.update(null), off, length);
             off += length;
         }
 

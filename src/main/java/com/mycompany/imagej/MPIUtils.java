@@ -3,13 +3,17 @@ package com.mycompany.imagej;
 import com.sun.jna.*;
 import com.sun.jna.ptr.PointerByReference;
 
+import java.lang.reflect.Field;
 import java.nio.ByteBuffer;
 
 public class MPIUtils {
     public static Pointer MPI_BYTE;
+    public static Pointer MPI_UNSIGNED_SHORT;
+    public static Pointer MPI_UNSIGNED;
+    public static Pointer MPI_UNSIGNED_LONG;
     public static Pointer MPI_FLOAT;
-    public static Pointer MPI_MIN;
-    public static Pointer MPI_MAX;
+    public static Pointer MPI_DOUBLE;
+
     public static Pointer MPI_COMM_WORLD;
 
     private static NativeLibrary mpilib;
@@ -28,11 +32,17 @@ public class MPIUtils {
     private static void Init() {
         checkMpiResult(MPILibrary.INSTANCE.MPI_Init(null, null));
 
-        MPI_BYTE = getSymbolPtr("ompi_mpi_byte");
-        MPI_COMM_WORLD = getSymbolPtr("ompi_mpi_comm_world");
-        MPI_FLOAT = getSymbolPtr("ompi_mpi_float");
-        MPI_MIN = getSymbolPtr("ompi_mpi_op_min");
-        MPI_MAX = getSymbolPtr("ompi_mpi_op_max");
+        for(Field f: MPIUtils.class.getDeclaredFields()) {
+            if(!f.getName().startsWith("MPI_")) {
+                continue;
+            }
+
+            try {
+                f.set(null, getSymbolPtr("ompi_" + f.getName().toLowerCase()));
+            } catch (IllegalAccessException e) {
+                throw new RuntimeException(e);
+            }
+        }
     }
 
     public static void Finalize() {
