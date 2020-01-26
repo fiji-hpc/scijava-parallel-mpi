@@ -26,8 +26,7 @@ benchrun() {
 
 		(cd ..; rm -f latest; ln -s "$date" latest)
 		for nodes in $(seq "$B_MAX_NODES" -1 1); do
-			output="$nodes/$dataset"
-			output_dir="$(dirname "$output")"
+			output_dir="$nodes"
 			mkdir -p "$output_dir"
 
 			P="-agentpath:$HOME/profiler/libasyncProfiler.so=start,alluser,file=$output_dir/profile.%p.svg"
