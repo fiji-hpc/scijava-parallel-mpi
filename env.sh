@@ -1,8 +1,10 @@
-export MAX_NODES=${MAX_NODES:-2}
-export ROUNDS=${ROUNDS:-1}
+export B_MAX_NODES=${B_MAX_NODES:-2}
+export B_ROUNDS=${B_ROUNDS:-1}
+export B_IMG_MODE=${B_IMG_MODE:-PLANAR}
 
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
 export CLASSPATH=$(< "$DIR"/classpath)
+export D="-agentlib:jdwp=transport=dt_socket,server=n,address=127.0.0.1:5005,suspend=y,onuncaught=n"
 
 benchenv() {
     env | grep ^B_
@@ -22,6 +24,7 @@ benchrun() {
 		mkdir -p "$DIR/run/outputs/$date"
 		cd "$DIR/run/outputs/$date"
     echo "$op $dataset" > info
+    echo "git commit: $(GIT_DIR=$DIR/.git git rev-parse HEAD)" >> info
     benchenv > env
 
 		(cd ..; rm -f latest; ln -s "$date" latest)
@@ -29,7 +32,7 @@ benchrun() {
 			output_dir="$nodes"
 			mkdir -p "$output_dir"
 
-			P="-agentpath:$HOME/profiler/libasyncProfiler.so=start,alluser,file=$output_dir/profile.%p.svg"
+			P="-agentpath:$HOME/profiler/libasyncProfiler.so=start,alluser,file=$output_dir/profile.%p.svg,interval=1ms"
 			cmd="mpirun --bind-to none --oversubscribe -np $nodes java $P com.mycompany.imagej.Main $op  ../../datasets/$dataset $nodes/result.tiff"
 			(echo $cmd; $cmd < /dev/null) |& tee -a out
 		done
@@ -46,7 +49,7 @@ benchpostprocess() (
     find "$result" -name "result.tiff" | while read -r result_image; do
       thumbnail_path="${result_image%/*}/result.thumbnail.png"
       if [ ! -f "$thumbnail_path" ]; then
-        convert "$result_image" -resize 500x "$thumbnail_path"
+        taskset -c 1 convert "$result_image" -resize 500x "$thumbnail_path"
       fi
     done
   done
