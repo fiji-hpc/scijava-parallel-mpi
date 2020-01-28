@@ -4,9 +4,14 @@ import com.mycompany.imagej.ops.MPIRankColor;
 import io.scif.config.SCIFIOConfig;
 import net.imagej.Dataset;
 import net.imagej.ImageJ;
+import net.imagej.ops.convert.clip.ClipRealTypes;
 import net.imglib2.RandomAccessibleInterval;
+import net.imglib2.outofbounds.OutOfBoundsBorderFactory;
 import net.imglib2.type.numeric.RealType;
+import net.imglib2.type.numeric.integer.UnsignedByteType;
 import net.imglib2.type.numeric.real.DoubleType;
+import net.imglib2.type.numeric.real.FloatType;
+import net.imglib2.view.IterableRandomAccessibleInterval;
 import net.imglib2.view.Views;
 
 import static com.mycompany.imagej.Measure.measure;
@@ -46,7 +51,7 @@ public class Main {
             Dataset input = measure("read", () -> ij.scifio().datasetIO().open(inputPath, createSCIFIOConfig()));
             Utils.rootPrint("Input image: " + input.getImgPlus().getImg());
 
-            RandomAccessibleInterval output = ij.op().create().img(input);
+            RandomAccessibleInterval output = ij.op().create().img(input, new UnsignedByteType());
 
             int rounds = 1;
             if(System.getenv("B_ROUNDS") != null) {
@@ -56,7 +61,27 @@ public class Main {
                 if (op.equals("rank_color")) {
                     ij.op().run(MPIRankColor.class, output, input);
                 } else if (op.equals("edge_convolution")) {
-                    convolve(ij, output, (RandomAccessibleInterval) input, edgeKernel());
+                    RandomAccessibleInterval<FloatType> result;
+/*
+                    result = (RandomAccessibleInterval<FloatType>) ij.op().run(
+                            ConvolveFFTF.class,
+                            (RandomAccessibleInterval<UnsignedByteType>) input.getImgPlus().getImg(),
+                            ij.op().create().kernel(edgeKernel(), new DoubleType()),
+                            null,
+                            new OutOfBoundsBorderFactory<>()
+                    );
+*/
+                    result = ij.op().filter().convolve(
+                            (RandomAccessibleInterval<UnsignedByteType>) input.getImgPlus().getImg(),
+                            ij.op().create().kernel(edgeKernel(), new DoubleType()),
+                            new OutOfBoundsBorderFactory<>()
+                    );
+
+                    ij.op().convert().imageType(
+                            new IterableRandomAccessibleInterval<UnsignedByteType>(output),
+                            new IterableRandomAccessibleInterval<>(result),
+                            new ClipRealTypes<>()
+                    );
                 } else if (op.equals("boxblur_convolution")) {
                     convolve(ij, output, (RandomAccessibleInterval) input, boxBlurKernel(Integer.parseInt(System.getenv("B_KERNEL_SIZE"))));
                 } else {
@@ -67,8 +92,12 @@ public class Main {
             }
 
             if (MPIUtils.isRoot()) {
+                SCIFIOConfig config = new SCIFIOConfig();
+                config.writerSetSequential(true);
+                config.writerSetCompression("Uncompressed");
+                final RandomAccessibleInterval finalOutput = output;
                 measure("write", () -> {
-                    ij.scifio().datasetIO().save(ij.dataset().create(output), outputPath);
+                    ij.scifio().datasetIO().save(ij.dataset().create(finalOutput), outputPath, config);
                 });
             }
         } catch(Exception e) {
