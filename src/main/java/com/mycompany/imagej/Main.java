@@ -6,13 +6,10 @@ import net.imagej.Dataset;
 import net.imagej.ImageJ;
 import net.imagej.ops.convert.clip.ClipRealTypes;
 import net.imglib2.RandomAccessibleInterval;
-import net.imglib2.outofbounds.OutOfBoundsBorderFactory;
-import net.imglib2.type.numeric.RealType;
 import net.imglib2.type.numeric.integer.UnsignedByteType;
 import net.imglib2.type.numeric.real.DoubleType;
 import net.imglib2.type.numeric.real.FloatType;
 import net.imglib2.view.IterableRandomAccessibleInterval;
-import net.imglib2.view.Views;
 
 import static com.mycompany.imagej.Measure.measure;
 
@@ -25,7 +22,12 @@ public class Main {
                 kernel[r][c] = 1.0 / (size * size);
             }
         }
-//        kernel[size / 2][size / 2] = 1;
+        return kernel;
+    }
+
+    static double[][] identityKernel(int size) {
+        double [][] kernel = new double[size][size];
+        kernel[size / 2][size / 2] = 1;
         return kernel;
     }
 
@@ -60,21 +62,12 @@ public class Main {
             for(int i = 0; i < rounds; i++) {
                 if (op.equals("rank_color")) {
                     ij.op().run(MPIRankColor.class, output, input);
-                } else if (op.equals("edge_convolution")) {
-                    RandomAccessibleInterval<FloatType> result;
-/*
-                    result = (RandomAccessibleInterval<FloatType>) ij.op().run(
-                            ConvolveFFTF.class,
+                } else if (op.equals("convolution")) {
+                    RandomAccessibleInterval<FloatType> result = ij.op().create().img(input, new FloatType());
+                    ij.op().filter().convolve(
+                            result,
                             (RandomAccessibleInterval<UnsignedByteType>) input.getImgPlus().getImg(),
-                            ij.op().create().kernel(edgeKernel(), new DoubleType()),
-                            null,
-                            new OutOfBoundsBorderFactory<>()
-                    );
-*/
-                    result = ij.op().filter().convolve(
-                            (RandomAccessibleInterval<UnsignedByteType>) input.getImgPlus().getImg(),
-                            ij.op().create().kernel(edgeKernel(), new DoubleType()),
-                            new OutOfBoundsBorderFactory<>()
+                            ij.op().create().kernel(getKernel(), new DoubleType())
                     );
 
                     ij.op().convert().imageType(
@@ -82,8 +75,6 @@ public class Main {
                             new IterableRandomAccessibleInterval<>(result),
                             new ClipRealTypes<>()
                     );
-                } else if (op.equals("boxblur_convolution")) {
-                    convolve(ij, output, (RandomAccessibleInterval) input, boxBlurKernel(Integer.parseInt(System.getenv("B_KERNEL_SIZE"))));
                 } else {
                     System.err.println("Unknown op: " + op);
                     System.exit(1);
@@ -129,12 +120,18 @@ public class Main {
         return config;
     }
 
-    private static <O extends RealType<O>> void convolve(ImageJ ij, RandomAccessibleInterval<O> output, RandomAccessibleInterval<O> input, double[][] kernel) {
-        ij.op().filter().convolve(
-                output,
-                Views.extendMirrorSingle(input),
-                ij.op().create().kernel(kernel, new DoubleType())
-        );
+    private static double[][] getKernel() {
+        String kernel = System.getenv("B_KERNEL");
+        int size = Integer.parseInt(System.getenv("B_KERNEL_SIZE"));
+        switch (kernel) {
+            case "identity":
+                return identityKernel(size);
+            case "boxblur":
+                return boxBlurKernel(size);
+            case "edge":
+                return edgeKernel();
+            default:
+                throw new RuntimeException("Unknown B_KERNEL: " + kernel);
+        }
     }
-
 }
