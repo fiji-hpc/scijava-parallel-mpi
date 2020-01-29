@@ -12,6 +12,7 @@ import net.imglib2.type.numeric.real.FloatType;
 import net.imglib2.view.IterableRandomAccessibleInterval;
 
 import static com.mycompany.imagej.Measure.measure;
+import static com.mycompany.imagej.Measure.measureCatch;
 
 
 public class Main {
@@ -67,17 +68,21 @@ public class Main {
                     ij.op().run(MPIRankColor.class, output, input);
                 } else if (op.equals("convolution")) {
                     RandomAccessibleInterval<FloatType> result = ij.op().create().img(input, new FloatType());
-                    ij.op().filter().convolve(
-                            result,
-                            (RandomAccessibleInterval<UnsignedByteType>) input.getImgPlus().getImg(),
-                            ij.op().create().kernel(getKernel(), new DoubleType())
-                    );
+                    measureCatch("total_convolution", () -> {
+                            ij.op().filter().convolve(
+                                    result,
+                                    (RandomAccessibleInterval<UnsignedByteType>) input.getImgPlus().getImg(),
+                                    ij.op().create().kernel(getKernel(), new DoubleType())
+                            );
+                        });
 
-                    ij.op().convert().imageType(
-                            new IterableRandomAccessibleInterval<UnsignedByteType>(output),
-                            new IterableRandomAccessibleInterval<>(result),
-                            new ClipRealTypes<>()
-                    );
+                    measureCatch("convert", () -> {
+                        ij.op().convert().imageType(
+                                new IterableRandomAccessibleInterval<UnsignedByteType>(output),
+                                new IterableRandomAccessibleInterval<>(result),
+                                new ClipRealTypes<>()
+                        );
+                    });
                 } else {
                     System.err.println("Unknown op: " + op);
                     System.exit(1);
