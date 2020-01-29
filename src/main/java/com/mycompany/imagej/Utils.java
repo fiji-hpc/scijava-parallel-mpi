@@ -21,7 +21,7 @@ import java.util.concurrent.ExecutionException;
 import static com.mycompany.imagej.Measure.measureCatch;
 
 public class Utils {
-      public static <I> List<RandomAccessibleInterval<I>> splitAll(RandomAccessibleInterval<I> input) {
+    public static <I> List<RandomAccessibleInterval<I>> splitAll(RandomAccessibleInterval<I> input) {
         int n = MPIUtils.getSize();
 
         List<RandomAccessibleInterval<I>> splits = new ArrayList<>();
@@ -57,12 +57,16 @@ public class Utils {
     }
 
     public static void rootPrint(Object s) {
-         if(MPIUtils.isRoot()) {
+        if(MPIUtils.isRoot()) {
             System.out.println(s.toString());
-         }
+        }
     }
 
     public static <O extends RealType<O>> void gather(RandomAccessibleInterval<O> output, List<RandomAccessibleInterval<O>> blocks) {
+        if(output instanceof IntervalView) {
+            output = (RandomAccessibleInterval<O>) (((IntervalView<O>) output).getSource());
+        }
+
         if(output instanceof Dataset) {
             output = (RandomAccessibleInterval<O>) ((Dataset) output).getImgPlus();
         }
@@ -110,7 +114,7 @@ public class Utils {
 
                 cell_off += length;
                 if(cell_off > cell_rows) {
-                        throw new RuntimeException("UNEXPECTED");
+                    throw new RuntimeException("UNEXPECTED");
                 }
                 if(cell_off == cell_rows) {
                     lastCell++;
@@ -155,7 +159,7 @@ public class Utils {
 
                 cell_off += length;
                 if(cell_off > cell_rows) {
-                        throw new RuntimeException("UNEXPECTED");
+                    throw new RuntimeException("UNEXPECTED");
                 }
                 if(cell_off == cell_rows) {
                     lastCell++;
