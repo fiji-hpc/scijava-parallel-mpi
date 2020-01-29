@@ -42,11 +42,15 @@ import net.imglib2.type.numeric.RealType;
 import net.imglib2.view.Views;
 import org.scijava.plugin.Plugin;
 
+import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.*;
+
+import static com.mycompany.imagej.Measure.measureCatch;
 
 @Plugin(type = Ops.Filter.Convolve.class, priority = 1000.0D)
 public class MPIConvolveNaiveC<I extends RealType<I>, O extends RealType<O> & NativeType<O>, K extends RealType<K>, C extends ComplexType<C> & NativeType<C>> extends AbstractBinaryComputerOp<RandomAccessibleInterval<I>, RandomAccessibleInterval<K>, RandomAccessibleInterval<O>>
-	implements Ops.Filter.Convolve
+		implements Ops.Filter.Convolve
 {
 	public void compute(RandomAccessibleInterval<I> input, RandomAccessibleInterval<K> kernel, RandomAccessibleInterval<O> output) {
 		List<RandomAccessibleInterval<O>> parts = Utils.splitAll(output);
@@ -54,44 +58,74 @@ public class MPIConvolveNaiveC<I extends RealType<I>, O extends RealType<O> & Na
 		Utils.rootPrint(getClass().getName());
 		Utils.print(myBlock);
 
-		RandomAccess<I> inRA = Views.extendMirrorSingle(input).randomAccess();
+		measureCatch("convolution", () -> process(input, kernel, myBlock));
 
-		final Cursor<K> kernelC = Views.iterable(kernel).localizingCursor();
-		final Cursor<O> outC = Views.iterable(myBlock).localizingCursor();
+		Utils.gather(myBlock, parts);
+	}
 
+	private void process(RandomAccessibleInterval<I> input, RandomAccessibleInterval<K> kernel, RandomAccessibleInterval<O> myBlock) {
 		final long[] kernelRadius = new long[kernel.numDimensions()];
 		for (int i = 0; i < kernelRadius.length; i++) {
 			kernelRadius[i] = kernel.dimension(i) / 2;
 		}
 
-		final long[] pos = new long[input.numDimensions()];
-		while (outC.hasNext()) {
-			// image
-			outC.fwd();
-			outC.localize(pos);
-
-			// kernel inlined version of the method convolve
-			float val = 0;
-			inRA.setPosition(pos);
-
-			kernelC.reset();
-			while (kernelC.hasNext()) {
-				kernelC.fwd();
-
-				for (int i = 0; i < kernelRadius.length; i++) {
-					// dimension can have zero extension e.g. vertical 1d kernel
-					if (kernelRadius[i] > 0) {
-						inRA.setPosition(pos[i] + kernelC.getLongPosition(i) -
-							kernelRadius[i], i);
-					}
-				}
-
-				val += inRA.get().getRealDouble() * kernelC.get().getRealDouble();
-			}
-
-			outC.get().setReal(val);
+		final ArrayList<Future<Void>> futures = new ArrayList<>();
+		int threads = Runtime.getRuntime().availableProcessors();
+		if(System.getenv("B_THREADS_NUM") != null) {
+			threads = Integer.parseInt(System.getenv("B_THREADS_NUM"));
 		}
 
-		Utils.gather(myBlock, parts);
+		ExecutorService executor = Executors.newFixedThreadPool(threads);
+		int thread_num = 0;
+		for(final RandomAccessibleInterval<O> part: Utils.splitAll(myBlock, threads)) {
+			Utils.print("Thread " + thread_num++ + ": " + part);
+			final Callable<Void> call = () -> {
+				final Cursor<O> outC = Views.iterable(part).localizingCursor();
+				final Cursor<K> kernelC = Views.iterable(kernel).localizingCursor();
+				RandomAccess<I> inRA = Views.extendMirrorSingle(input).randomAccess();
+				final long[] pos = new long[input.numDimensions()];
+
+				while (outC.hasNext()) {
+					// image
+					outC.fwd();
+					outC.localize(pos);
+
+					// kernel inlined version of the method convolve
+					float val = 0;
+					inRA.setPosition(pos);
+
+					kernelC.reset();
+					while (kernelC.hasNext()) {
+						kernelC.fwd();
+
+						for (int i = 0; i < kernelRadius.length; i++) {
+							// dimension can have zero extension e.g. vertical 1d kernel
+							if (kernelRadius[i] > 0) {
+								inRA.setPosition(pos[i] + kernelC.getLongPosition(i) -
+										kernelRadius[i], i);
+							}
+						}
+
+						val += inRA.get().getRealDouble() * kernelC.get().getRealDouble();
+					}
+
+					outC.get().setReal(val);
+				}
+
+				return null;
+			};
+
+			futures.add(executor.submit(call));
+		}
+
+		for (final Future<Void> future : futures) {
+			try {
+				future.get();
+			} catch (InterruptedException | ExecutionException e) {
+				e.printStackTrace();
+			}
+		}
+
+		executor.shutdown();
 	}
 }

@@ -22,8 +22,10 @@ import static com.mycompany.imagej.Measure.measureCatch;
 
 public class Utils {
     public static <I> List<RandomAccessibleInterval<I>> splitAll(RandomAccessibleInterval<I> input) {
-        int n = MPIUtils.getSize();
+        return splitAll(input, MPIUtils.getSize());
+    }
 
+    public static <I> List<RandomAccessibleInterval<I>> splitAll(RandomAccessibleInterval<I> input, int n) {
         List<RandomAccessibleInterval<I>> splits = new ArrayList<>();
         for(int i = 0; i < n; i++) {
             splits.add(splitFor(input, i, n));
@@ -34,16 +36,16 @@ public class Utils {
     private static <I> IntervalView<I> splitFor(RandomAccessibleInterval<I> img, int rank, int nodes) {
         long[] from = new long[img.numDimensions()];
         long[] to = new long[img.numDimensions()];
-        for (int d = 0; d < img.numDimensions() - 1; d++) {
+        for (int d = 0; d < img.numDimensions(); d++) {
             from[d] = img.min(d);
             to[d] = img.max(d);
         }
         long per_node = rowsPerNode(img, nodes);
-        from[img.numDimensions() - 1] = rank * per_node;
-        to[img.numDimensions() - 1] = Math.min(
-                (rank + 1) * per_node - 1,
+        to[img.numDimensions() - 1] = from[img.numDimensions() -1] + Math.min(
+                 (rank + 1) * per_node - 1,
                 img.dimension(img.numDimensions() - 1) - 1
         );
+        from[img.numDimensions() - 1] += rank * per_node;
 
         return Views.interval(img, from, to);
     }
