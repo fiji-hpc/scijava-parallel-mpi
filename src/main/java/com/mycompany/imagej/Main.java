@@ -60,6 +60,9 @@ public class Main {
                 rounds = Integer.parseInt(System.getenv("B_ROUNDS"));
             }
             for(int i = 0; i < rounds; i++) {
+                Utils.rootPrint("### Round " + i);
+                MPIUtils.barrier();
+
                 if (op.equals("rank_color")) {
                     ij.op().run(MPIRankColor.class, output, input);
                 } else if (op.equals("convolution")) {
@@ -79,6 +82,8 @@ public class Main {
                     System.err.println("Unknown op: " + op);
                     System.exit(1);
                 }
+
+                MPIUtils.barrier();
                 Measure.nextRound();
             }
 

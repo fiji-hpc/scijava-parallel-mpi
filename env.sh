@@ -29,7 +29,7 @@ benchrun() {
     cd "$B_OUTPUT_DIR"
     echo "$op $dataset" > info
     echo "git commit: $(GIT_DIR=$DIR/.git git rev-parse HEAD)" >> info
-    benchenv > env
+    benchenv | sed 's/^/export /' > env
 
     if [ ! -z "$date" ];then
   		(cd ..; rm -f latest; ln -s "$date" latest)
@@ -41,7 +41,11 @@ benchrun() {
 
 			P="-agentpath:$HOME/profiler/libasyncProfiler.so=start,alluser,file=$output_dir/profile.%p.svg,interval=1ms"
 			cmd="mpirun --bind-to none --oversubscribe -np $nodes java $P com.mycompany.imagej.Main $op  $DIR/run/datasets/$dataset $nodes/result.tiff"
-			(echo $cmd; $cmd < /dev/null) |& tee -a out
+			(
+        echo "## $nodes nodes"
+        echo $cmd;
+        $cmd < /dev/null
+      ) |& tee -a out
 		done
 	)
 }
