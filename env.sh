@@ -10,6 +10,13 @@ benchenv() {
     env | grep ^B_
 }
 
+bench_report_dirs() {
+  path="${1:-$DIR/run/outputs}"
+  find "$path" -name "stats.csv" | while read -r stats_path; do
+    dirname "$stats_path"
+  done | sort
+}
+
 benchrun() {
   op=$1
 	dataset=$2
@@ -51,9 +58,8 @@ benchrun() {
 }
 
 benchpostprocess() (
-  path="${1:-$DIR/run/outputs}"
-  find $path -name "stats.csv" | while read -r stats_path; do
-    report_dir=$(dirname "$stats_path")
+  for report_dir in $(bench_report_dirs "$1"); do
+    echo "$report_dir"
 
     if [ ! -f "$report_dir/checksums" ]; then
       find "$report_dir" -name "result.tiff" -exec md5sum {} \; > "$report_dir/checksums"
@@ -69,10 +75,17 @@ benchpostprocess() (
 )
 
 benchreports() {
-  path="${1:-$DIR/run/outputs}"
-  find $path -name "stats.csv" | while read -r stats_path; do
-    report_dir=$(dirname "$stats_path")
+  for report_dir in $(bench_report_dirs "$1"); do
     echo $report_dir
     B_RESULT_DIR="$report_dir" jupyter nbconvert --ExecutePreprocessor.timeout=600 --execute --to html --stdout "$DIR/report.ipynb" > "$report_dir/report.html"
+  done
+}
+
+benchlist() {
+  for report in $(bench_report_dirs "$1"); do
+    basename "$report"
+    cat "$report/info"
+    cat "$report/env"
+    echo
   done
 }
