@@ -12,6 +12,19 @@ benchenv() {
     env | grep ^B_
 }
 
+benchenvedit() {
+  benchenv > "$DIR/config"
+  if $EDITOR "$DIR/config"; then
+    benchenv | cut -d= -f1 | while read -r var; do
+      unset "$var"
+    done
+    source "$DIR/config"
+    benchenv
+  else
+    echo Configuration canceled
+  fi
+}
+
 bench_report_dirs() {
   path="${1:-$DIR/run/outputs}"
   find "$path" -name "stats.csv" | while read -r stats_path; do
