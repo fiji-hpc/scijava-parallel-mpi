@@ -112,7 +112,7 @@ public class MPIUtils {
         int MPI_Recv(long buf, int count, Pointer datatype, int dest, int tag, Pointer comm, Pointer status);
         int MPI_Bcast(float[] buffer, int count, Pointer datatype, int root, Pointer comm);
         int MPI_Ibcast(Memory buffer, int count, Pointer datatype, int root, Pointer comm, PointerByReference request);
-        void MPI_Waitall(int count, Pointer[] requests, Pointer[] statuses);
+        int MPI_Waitall(int count, Pointer[] requests, Pointer[] statuses);
     }
 
 }

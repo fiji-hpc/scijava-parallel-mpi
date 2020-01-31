@@ -101,8 +101,8 @@ public class Utils {
     }
 
     private static <O extends RealType<O>> void gatherGeneric(List<RandomAccessibleInterval<O>> blocks, RandomAccessibleInterval<O> img) {
-        NonBlockingBroadcast broadcast = new NonBlockingBroadcast();
         List<float[]> results = new ArrayList<>();
+        NonBlockingBroadcast broadcast = new NonBlockingBroadcast();
 
         for (int node = 0; node < blocks.size(); node++) {
             RandomAccessibleInterval<O> block = blocks.get(node);
@@ -143,9 +143,9 @@ public class Utils {
     private static <O extends RealType<O>> void gatherPlanar(List<RandomAccessibleInterval<O>> blocks, PlanarImg img) {
         int cols = (int) img.dimension(0);
 
-        NonBlockingBroadcast transfer = new NonBlockingBroadcast();
         int cell_off = 0;
         ArrayDataAccess<?> c = img.getPlane(0);
+        NonBlockingBroadcast transfer = new NonBlockingBroadcast();
         long lastCell = 0;
         for(int i = 0; i < blocks.size(); i++) {
             RandomAccessibleInterval<O> block = blocks.get(i);
@@ -155,13 +155,15 @@ public class Utils {
                 total_rows *= (int) block.dimension(2);
             }
 
+            List<NonBlockingBroadcast.Block> transferBlocks = new ArrayList<>();
+
             int sent = 0;
             while(sent < total_rows) {
                 int cell_rows = (int) img.dimension(1);
                 int length = Math.min(total_rows - sent, cell_rows - cell_off);
                 print(block + " cell=" + lastCell + " cell_ofset=" + cell_off + " length=" + length + "; node=" + i);
 
-                transfer.requestTransfer(i, c, cell_off * cols, cols * length);
+                transferBlocks.add(new NonBlockingBroadcast.Block(c.getCurrentStorageArray(), cell_off * cols, cols*length));
 
                 cell_off += length;
                 if(cell_off > cell_rows) {
@@ -178,6 +180,8 @@ public class Utils {
 
                 sent += length;
             }
+
+            transfer.requestTransfer(i, transferBlocks);
         }
         if(lastCell != img.numSlices()) {
             throw new RuntimeException("Unexpected");
