@@ -4,7 +4,6 @@ import com.sun.jna.*;
 import com.sun.jna.ptr.PointerByReference;
 
 import java.lang.reflect.Field;
-import java.nio.ByteBuffer;
 
 public class MPIUtils {
     public static Pointer MPI_BYTE;
@@ -111,7 +110,7 @@ public class MPIUtils {
         int MPI_Allreduce(float[] sendbuf, float[] recvbuf, int count, Pointer datatype, Pointer op, Pointer comm);
         int MPI_Send(long buf, int count, Pointer datatype, int dest, int tag, Pointer comm);
         int MPI_Recv(long buf, int count, Pointer datatype, int dest, int tag, Pointer comm, Pointer status);
-        int MPI_Bcast(ByteBuffer buffer, int count, Pointer datatype, int root, Pointer comm);
+        int MPI_Bcast(float[] buffer, int count, Pointer datatype, int root, Pointer comm);
         int MPI_Ibcast(Memory buffer, int count, Pointer datatype, int root, Pointer comm, PointerByReference request);
         void MPI_Waitall(int count, Pointer[] requests, Pointer[] statuses);
     }

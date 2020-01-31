@@ -121,6 +121,10 @@ public class NonBlockingBroadcast {
         this.transfers.add(new BlockTransfer(root, data.getCurrentStorageArray(), offset, len));
     }
 
+    public <A> void requestTransfer(int root, float[] data, int offset, int len) {
+        this.transfers.add(new BlockTransfer(root, data, offset, len));
+    }
+
     public void waitForTransfer() {
         Pointer[] ptrs = new Pointer[transfers.size()];
         for(int i = 0; i < transfers.size(); i++) {

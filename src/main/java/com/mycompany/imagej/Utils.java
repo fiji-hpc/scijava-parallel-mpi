@@ -10,8 +10,10 @@ import net.imglib2.img.basictypeaccess.volatiles.array.DirtyVolatileByteArray;
 import net.imglib2.img.cell.Cell;
 import net.imglib2.img.planar.PlanarImg;
 import net.imglib2.type.numeric.RealType;
+import net.imglib2.type.numeric.real.FloatType;
 import net.imglib2.util.Intervals;
 import net.imglib2.view.IntervalView;
+import net.imglib2.view.IterableRandomAccessibleInterval;
 import net.imglib2.view.Views;
 
 import java.util.ArrayList;
@@ -79,16 +81,63 @@ public class Utils {
 
         RandomAccessibleInterval<O> finalOutput = output;
         measureCatch("gather", () -> {
-            if(finalOutput instanceof ArrayImg) {
+            if(System.getenv("B_GATHER_GENERIC") != null) {
+                rootPrint("Gather: gatherGeneric (overridden)");
+                gatherGeneric(blocks, finalOutput);
+            } else if(finalOutput instanceof ArrayImg) {
+                rootPrint("Gather: gatherImg");
                 gatherImg(blocks, (ArrayImg) finalOutput);
             } else if(finalOutput instanceof SCIFIOCellImg) {
+                rootPrint("Gather: gatherCells");
                 gatherCells(blocks, (SCIFIOCellImg) finalOutput);
             } else if(finalOutput instanceof PlanarImg) {
+                rootPrint("Gather: gatherPlanar");
                 gatherPlanar(blocks, (PlanarImg) finalOutput);
             } else {
-                throw new RuntimeException("Unsupported!" + finalOutput.getClass());
+                rootPrint("Gather: gatherGeneric");
+                gatherGeneric(blocks, finalOutput);
             }
         });
+    }
+
+    private static <O extends RealType<O>> void gatherGeneric(List<RandomAccessibleInterval<O>> blocks, RandomAccessibleInterval<O> img) {
+        NonBlockingBroadcast broadcast = new NonBlockingBroadcast();
+        List<float[]> results = new ArrayList<>();
+
+        for (int node = 0; node < blocks.size(); node++) {
+            RandomAccessibleInterval<O> block = blocks.get(node);
+
+            long[] dims = new long[block.numDimensions()];
+            block.dimensions(dims);
+            int count = (int) Intervals.numElements(dims);
+            if (count > 0) {
+                float[] storage = new float[count];
+                results.add(storage);
+                if (node == MPIUtils.getRank()) {
+                    int j = 0;
+                    for (O item : new IterableRandomAccessibleInterval<>(block)) {
+                        FloatType b = (FloatType) item;
+                        storage[j++] = b.getRealFloat();
+                    }
+                }
+
+                broadcast.requestTransfer(node, storage, 0, count);
+            }
+        }
+
+        broadcast.waitForTransfer();
+
+        for (int node = 0; node < blocks.size(); node++) {
+            RandomAccessibleInterval<O> block = blocks.get(node);
+            float[] storage = results.get(node);
+            if (node != MPIUtils.getRank()) {
+                int j = 0;
+                for (O item : new IterableRandomAccessibleInterval<>(block)) {
+                    FloatType b = (FloatType) item;
+                    b.setReal(storage[j++]);
+                }
+            }
+        }
     }
 
     private static <O extends RealType<O>> void gatherPlanar(List<RandomAccessibleInterval<O>> blocks, PlanarImg img) {
@@ -175,6 +224,7 @@ public class Utils {
         }
 
         transfer.waitForTransfer();
+
     }
 
     private static <O extends RealType<O>> void gatherImg(List<RandomAccessibleInterval<O>> blocks, ArrayImg img) {
