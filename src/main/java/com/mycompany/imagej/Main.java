@@ -4,12 +4,9 @@ import com.mycompany.imagej.ops.MPIRankColor;
 import io.scif.config.SCIFIOConfig;
 import net.imagej.Dataset;
 import net.imagej.ImageJ;
-import net.imagej.ops.convert.clip.ClipRealTypes;
 import net.imglib2.RandomAccessibleInterval;
-import net.imglib2.type.numeric.integer.UnsignedByteType;
+import net.imglib2.type.numeric.RealType;
 import net.imglib2.type.numeric.real.DoubleType;
-import net.imglib2.type.numeric.real.FloatType;
-import net.imglib2.view.IterableRandomAccessibleInterval;
 
 import static com.mycompany.imagej.Measure.measure;
 import static com.mycompany.imagej.Measure.measureCatch;
@@ -49,12 +46,11 @@ public class Main {
             String op = args[0];
             String inputPath = args[1];
             String outputPath = args[2];
-
             ImageJ ij = new ImageJ();
             Dataset input = measure("read", () -> ij.scifio().datasetIO().open(inputPath, createSCIFIOConfig()));
             Utils.rootPrint("Input image: " + input.getImgPlus().getImg());
 
-            RandomAccessibleInterval output = ij.op().create().img(input, new UnsignedByteType());
+            RandomAccessibleInterval<? extends RealType> output = ij.op().create().img(input);
 
             int rounds = 1;
             if(System.getenv("B_ROUNDS") != null) {
@@ -67,22 +63,7 @@ public class Main {
                 if (op.equals("rank_color")) {
                     ij.op().run(MPIRankColor.class, output, input);
                 } else if (op.equals("convolution")) {
-                    RandomAccessibleInterval<FloatType> result = ij.op().create().img(input, new FloatType());
-                    measureCatch("total_convolution", () -> {
-                            ij.op().filter().convolve(
-                                    result,
-                                    (RandomAccessibleInterval<UnsignedByteType>) input.getImgPlus().getImg(),
-                                    ij.op().create().kernel(getKernel(), new DoubleType())
-                            );
-                        });
-
-                    measureCatch("convert", () -> {
-                        ij.op().convert().imageType(
-                                new IterableRandomAccessibleInterval<UnsignedByteType>(output),
-                                new IterableRandomAccessibleInterval<>(result),
-                                new ClipRealTypes<>()
-                        );
-                    });
+                    convolution(ij, (RandomAccessibleInterval) input, output);
                 } else {
                     System.err.println("Unknown op: " + op);
                     System.exit(1);
@@ -107,6 +88,16 @@ public class Main {
         }
 
         System.exit(0);
+    }
+
+    private static <I extends RealType<I>, O extends RealType<O>> void convolution(ImageJ ij, RandomAccessibleInterval<I> input, RandomAccessibleInterval<O> output) {
+        measureCatch("total_convolution", () -> {
+            ij.op().filter().convolve(
+                    output,
+                    input,
+                    ij.op().create().kernel(getKernel(), new DoubleType())
+            );
+        });
     }
 
     private static SCIFIOConfig createSCIFIOConfig() {
