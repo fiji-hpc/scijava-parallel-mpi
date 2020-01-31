@@ -60,6 +60,7 @@ public class MPIConvolveNaiveC<I extends RealType<I>, O extends RealType<O> & Na
 
 		measureCatch("convolution", () -> process(input, kernel, myBlock));
 
+		measureCatch("barrier", MPIUtils::barrier);
 		Utils.gather(myBlock, parts);
 	}
 
