@@ -1,4 +1,6 @@
 export B_MAX_NODES=${B_MAX_NODES:-2}
+export B_MIN_NODES=${B_MIN_NODES:-1}
+export B_NODES=${B_NODES}
 export B_ROUNDS=${B_ROUNDS:-1}
 export B_IMG_MODE=${B_IMG_MODE:-PLANAR}
 
@@ -42,7 +44,11 @@ benchrun() {
   		(cd ..; rm -f latest; ln -s "$date" latest)
     fi
 
-		for nodes in $(seq "$B_MAX_NODES" -1 1); do
+    if [ -n "$B_NODES" ]; then
+      B_MAX_NODES=$B_NODES
+      B_MIN_NODES=$B_NODES
+    fi
+		for nodes in $(seq "$B_MAX_NODES" -1 "$B_MIN_NODES"); do
 			output_dir="$nodes"
 			mkdir -p "$output_dir"
 
