@@ -153,6 +153,12 @@ public class NonBlockingBroadcast {
 
         requestTransfer(root, blocks);
     }
+    public <A> void requestTransfer(int root, byte[] data, int offset, int len) {
+        List<Block> blocks = new ArrayList<>();
+        blocks.add(new Block(data, offset, len));
+
+        requestTransfer(root, blocks);
+    }
 
     public void requestTransfer(int root, List<Block> blocks) {
         if(blocks.size() > 0) {

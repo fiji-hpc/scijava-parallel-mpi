@@ -29,7 +29,9 @@
 
 package com.mycompany.imagej.ops.filter.convolve;
 
+import com.mycompany.imagej.Chunk;
 import com.mycompany.imagej.MPIUtils;
+import com.mycompany.imagej.RandomAccessibleIntervalGatherer;
 import com.mycompany.imagej.Utils;
 import net.imagej.ops.Ops;
 import net.imagej.ops.special.computer.AbstractBinaryComputerOp;
@@ -53,24 +55,19 @@ public class MPIConvolveNaiveC<I extends RealType<I>, O extends RealType<O> & Na
 		implements Ops.Filter.Convolve
 {
 	public void compute(RandomAccessibleInterval<I> input, RandomAccessibleInterval<K> kernel, RandomAccessibleInterval<O> output) {
-		List<RandomAccessibleInterval<O>> parts = Utils.splitAll(output);
-		RandomAccessibleInterval<O> myBlock = parts.get(MPIUtils.getRank());
-		Utils.rootPrint(getClass().getName());
-		Utils.print(myBlock);
-
-		measureCatch("convolution", () -> process(input, kernel, myBlock));
-
+		Chunk<O> chunks = new Chunk<>(output, MPIUtils.getSize());
+		measureCatch("convolution", () -> process(input, kernel, chunks.getChunk(MPIUtils.getRank())));
 		measureCatch("barrier", MPIUtils::barrier);
-		Utils.gather(myBlock, parts);
+		RandomAccessibleIntervalGatherer.gather(chunks);
 	}
 
-	private void process(RandomAccessibleInterval<I> input, RandomAccessibleInterval<K> kernel, RandomAccessibleInterval<O> myBlock) {
+	private void process(RandomAccessibleInterval<I> input, RandomAccessibleInterval<K> kernel, Chunk<O> chunk) {
 		final long[] kernelRadius = new long[kernel.numDimensions()];
 		for (int i = 0; i < kernelRadius.length; i++) {
 			kernelRadius[i] = kernel.dimension(i) / 2;
 		}
 
-		final ArrayList<Future<Void>> futures = new ArrayList<>();
+		final List<Future<Void>> futures = new ArrayList<>();
 		int threads = Runtime.getRuntime().availableProcessors();
 		if(System.getenv("B_THREADS_NUM") != null) {
 			threads = Integer.parseInt(System.getenv("B_THREADS_NUM"));
@@ -78,10 +75,10 @@ public class MPIConvolveNaiveC<I extends RealType<I>, O extends RealType<O> & Na
 
 		ExecutorService executor = Executors.newFixedThreadPool(threads);
 		int thread_num = 0;
-		for(final RandomAccessibleInterval<O> part: Utils.splitAll(myBlock, threads)) {
-			Utils.print("Thread " + thread_num++ + ": " + part);
+		for(Chunk<O> job: chunk.split(threads)) {
+			Utils.print("Thread " + thread_num++ + ": " + job);
 			final Callable<Void> call = () -> {
-				final Cursor<O> outC = Views.iterable(part).localizingCursor();
+				final Cursor<O> outC = job.cursor();
 				final Cursor<K> kernelC = Views.iterable(kernel).localizingCursor();
 				RandomAccess<I> inRA = Views.extendMirrorSingle(input).randomAccess();
 				final long[] pos = new long[input.numDimensions()];
