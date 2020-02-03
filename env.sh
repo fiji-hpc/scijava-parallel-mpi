@@ -81,8 +81,24 @@ benchpostprocess() (
     echo "$report_dir"
 
     if [ ! -f "$report_dir/checksums" ]; then
-      find "$report_dir" -name "result.tiff" -exec md5sum {} \; > "$report_dir/checksums"
+      if grep identity "$report_dir/env" > /dev/null; then
+        src=$(grep -oE "bio/.+" "$report_dir/info")
+        echo $src
+        hash=$(md5sum "$DIR/run/datasets/${src%.*}.bin" | cut -f 1 -d' ')
+        (
+          echo "$hash orig"
+          find "$report_dir" -name "result.tiff" | while read -r result; do
+            convert "$result" gray:"$result.bin"
+            myhash=$(md5sum "$result.bin" | cut -f 1 -d ' ')
+            echo "$myhash $result.bin"
+          done
+        ) > "$report_dir/checksums"
+      else 
+        find "$report_dir" -name "result.tiff" -exec md5sum {} \; > "$report_dir/checksums"
+      fi
     fi
+
+    continue
 
     find "$report_dir" -name "result.tiff" | while read -r result_image; do
       thumbnail_path="${result_image%/*}/result.thumbnail.png"
@@ -105,6 +121,19 @@ benchlist() {
     basename "$report"
     cat "$report/info"
     cat "$report/env"
+    cat "$report/checksums"
+    grep -E -A 15 "(Java HotSpot|Primary job  terminated)" "$report/out"
+
     echo
   done
 }
+
+benchgc() {
+  for report_dir in $(bench_report_dirs "$1"); do
+    if [ ! -f "$report_dir/1/result.tiff" ] && [ ! -f "$report_dir/.keep" ]; then
+      echo "$report_dir" $(du -sh "$report_dir")
+#      echo rm -r "$report_dir"
+    fi
+  done
+}
+
