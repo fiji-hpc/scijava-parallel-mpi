@@ -71,7 +71,7 @@ public class RandomAccessibleIntervalGatherer {
                   planeOffset = 0;
 
                   if(lastPlane < img.numSlices()) {
-                     c = img.getPlane((int) lastPlane);
+                     c = img.getPlane(lastPlane);
                   }
                }
 

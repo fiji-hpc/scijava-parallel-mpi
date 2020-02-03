@@ -26,7 +26,7 @@ public class NonBlockingBroadcast {
         private Memory memory;
         private int root;
         private List<Block> blocks;
-        private int totalElements = 0;
+        private long totalElements = 0;
 
         public BlockTransfer(int root, List<Block> blocks) {
             this.root = root;
@@ -34,6 +34,10 @@ public class NonBlockingBroadcast {
 
             for(Block b: blocks) {
                 totalElements += b.len;
+            }
+
+            if(totalElements >= Integer.MAX_VALUE) {
+                throw new RuntimeException("Total elements too large: " + totalElements);
             }
 
             this.memory = new Memory(totalElements * getTypeSize());
@@ -106,7 +110,7 @@ public class NonBlockingBroadcast {
             PointerByReference ptr = new PointerByReference();
             int ret = MPIUtils.MPILibrary.INSTANCE.MPI_Ibcast(
                     memory,
-                    totalElements, getMPIType(), root, MPIUtils.MPI_COMM_WORLD, ptr);
+                    (int) totalElements, getMPIType(), root, MPIUtils.MPI_COMM_WORLD, ptr);
 
             if(ret != 0) {
                 throw new RuntimeException("mpi failed");
