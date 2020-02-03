@@ -39,55 +39,60 @@ public class Main {
 
     public static void main(String[] args) {
         try {
-            if(args.length == 0) {
-                System.err.println("Missing operation argument");
-                System.exit(1);
-            }
-            String op = args[0];
-            String inputPath = args[1];
-            String outputPath = args[2];
-            ImageJ ij = new ImageJ();
-            Dataset input = measure("read", () -> ij.scifio().datasetIO().open(inputPath, createSCIFIOConfig()));
-            Utils.rootPrint("Input image: " + input.getImgPlus().getImg());
-
-            RandomAccessibleInterval<? extends RealType> output = ij.op().create().img(input);
-
-            int rounds = 1;
-            if(System.getenv("B_ROUNDS") != null) {
-                rounds = Integer.parseInt(System.getenv("B_ROUNDS"));
-            }
-            for(int i = 0; i < rounds; i++) {
-                Utils.rootPrint("### Round " + i);
-                MPIUtils.barrier();
-
-                if (op.equals("rank_color")) {
-                    ij.op().run(MPIRankColor.class, output, input);
-                } else if (op.equals("convolution")) {
-                    convolution(ij, (RandomAccessibleInterval) input, output);
-                } else {
-                    System.err.println("Unknown op: " + op);
-                    System.exit(1);
-                }
-
-                MPIUtils.barrier();
-                Measure.nextRound();
-            }
-
-            if (MPIUtils.isRoot()) {
-                SCIFIOConfig config = new SCIFIOConfig();
-                config.writerSetSequential(true);
-                config.writerSetCompression("Uncompressed");
-                final RandomAccessibleInterval finalOutput = output;
-                measure("write", () -> {
-                    ij.scifio().datasetIO().save(ij.dataset().create(finalOutput), outputPath, config);
-                });
-            }
+            measure("total", () -> run(args));
         } catch(Exception e) {
             e.printStackTrace();
             System.exit(1);
         }
 
         System.exit(0);
+    }
+
+    private static void run(String[] args) throws Exception {
+        if(args.length == 0) {
+            System.err.println("Missing operation argument");
+            System.exit(1);
+        }
+        String op = args[0];
+        String inputPath = args[1];
+        String outputPath = args[2];
+        ImageJ ij = new ImageJ();
+        Dataset input = measure("read", () -> ij.scifio().datasetIO().open(inputPath, createSCIFIOConfig()));
+        Utils.rootPrint("Input image: " + input.getImgPlus().getImg());
+
+        RandomAccessibleInterval<? extends RealType> output = ij.op().create().img(input);
+
+        int rounds = 1;
+        if(System.getenv("B_ROUNDS") != null) {
+            rounds = Integer.parseInt(System.getenv("B_ROUNDS"));
+        }
+        for(int i = 0; i < rounds; i++) {
+            Utils.rootPrint("### Round " + i);
+            MPIUtils.barrier();
+
+            if (op.equals("rank_color")) {
+                ij.op().run(MPIRankColor.class, output, input);
+            } else if (op.equals("convolution")) {
+                convolution(ij, (RandomAccessibleInterval) input, output);
+            } else {
+                System.err.println("Unknown op: " + op);
+                System.exit(1);
+            }
+
+            MPIUtils.barrier();
+            Measure.nextRound();
+        }
+
+        if (MPIUtils.isRoot()) {
+            SCIFIOConfig config = new SCIFIOConfig();
+            config.writerSetSequential(true);
+            config.writerSetCompression("Uncompressed");
+            final RandomAccessibleInterval finalOutput = output;
+            measure("write", () -> {
+                ij.scifio().datasetIO().save(ij.dataset().create(finalOutput), outputPath, config);
+            });
+        }
+        MPIUtils.barrier();
     }
 
     private static <I extends RealType<I>, O extends RealType<O>> void convolution(ImageJ ij, RandomAccessibleInterval<I> input, RandomAccessibleInterval<O> output) {
