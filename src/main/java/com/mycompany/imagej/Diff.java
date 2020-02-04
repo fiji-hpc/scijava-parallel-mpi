@@ -36,7 +36,8 @@ public class Diff {
         Cursor<T> right = Views.flatIterable(rightDataset).cursor();
 
         int i = 0;
-        StringBuilder buf = new StringBuilder();
+        StringBuilder R = new StringBuilder();
+        StringBuilder L = new StringBuilder();
         boolean lineEquals = true;
         boolean haveLeft = true;
         boolean haveRight = true;
@@ -57,15 +58,19 @@ public class Diff {
             }
 
             if(print) {
-                System.out.print((pad(haveLeft ? left.get() : "")) + " ");
-                buf.append(pad(haveRight ? right.get() : " ")).append(" ");
+                L.append(pad(haveLeft ? left.get() : "")).append(" ");
+                R.append(pad(haveRight ? right.get() : " ")).append(" ");
 
                 i++;
                 if (i % 8 == 0) {
-                    System.out.print(lineEquals ? "       " : "  WRONG  ");
-                    System.out.print(buf.toString());
-                    buf.setLength(0);
-                    System.out.print('\n');
+                    if(!lineEquals) {
+                        System.out.print(L.toString());
+                        System.out.print(lineEquals ? "       " : "  WRONG  ");
+                        System.out.print(R.toString());
+                        System.out.print('\n');
+                    }
+                    R.setLength(0);
+                    L.setLength(0);
                     lineEquals = true;
                 }
             }
