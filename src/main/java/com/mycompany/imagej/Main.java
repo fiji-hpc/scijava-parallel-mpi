@@ -4,9 +4,14 @@ import com.mycompany.imagej.ops.MPIRankColor;
 import io.scif.config.SCIFIOConfig;
 import net.imagej.Dataset;
 import net.imagej.ImageJ;
+import net.imagej.ops.Ops;
+import net.imagej.ops.special.computer.UnaryComputerOp;
+import net.imglib2.FinalDimensions;
 import net.imglib2.RandomAccessibleInterval;
+import net.imglib2.type.NativeType;
 import net.imglib2.type.numeric.RealType;
 import net.imglib2.type.numeric.real.DoubleType;
+import net.imglib2.view.IterableRandomAccessibleInterval;
 
 import static com.mycompany.imagej.Measure.measure;
 import static com.mycompany.imagej.Measure.measureCatch;
@@ -60,7 +65,7 @@ public class Main {
         Dataset input = measure("read", () -> ij.scifio().datasetIO().open(inputPath, createSCIFIOConfig()));
         Utils.rootPrint("Input image: " + input.getImgPlus().getImg());
 
-        RandomAccessibleInterval<? extends RealType> output = ij.op().create().img(input);
+        RandomAccessibleInterval<? extends NativeType<?>> output = ij.op().create().img(input);
 
         int rounds = 1;
         if(System.getenv("B_ROUNDS") != null) {
@@ -73,7 +78,24 @@ public class Main {
             if (op.equals("rank_color")) {
                 ij.op().run(MPIRankColor.class, output, input);
             } else if (op.equals("convolution")) {
-                convolution(ij, (RandomAccessibleInterval) input, output);
+                convolution(ij, (RandomAccessibleInterval) input, (RandomAccessibleInterval) output);
+            } else if(op.equals("zproject")) {
+                long[] dims = new long[input.numDimensions() - 1];
+                for(int j = 0; j < input.numDimensions() - 1; j++) {
+                    dims[j] = input.dimension(j);
+                }
+
+                output = ij.op().create().img(new FinalDimensions(dims), (NativeType) input.getType());
+
+                UnaryComputerOp mean_op = (UnaryComputerOp) ij.op().op(Ops.Stats.Max.NAME,
+                            input.getImgPlus());
+
+                ij.op().transform().project(
+                        new IterableRandomAccessibleInterval<>(output),
+                        input,
+                        mean_op,
+                        input.numDimensions() - 1
+                );
             } else {
                 System.err.println("Unknown op: " + op);
                 System.exit(1);

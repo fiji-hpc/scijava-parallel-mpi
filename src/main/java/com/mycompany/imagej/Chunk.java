@@ -1,42 +1,41 @@
 package com.mycompany.imagej;
 
 import net.imglib2.Cursor;
-import net.imglib2.RandomAccessibleInterval;
+import net.imglib2.IterableInterval;
 import net.imglib2.util.Intervals;
-import net.imglib2.view.Views;
 
 import java.util.Iterator;
 
 public class Chunk<T> implements Iterable<Chunk<T>> {
-    private RandomAccessibleInterval<T> data;
+    private IterableInterval<T> data;
     private long offset;
     private long len;
     private int chunks;
 
-    public Chunk(RandomAccessibleInterval<T> data, int chunks) {
+    public Chunk(IterableInterval<T> data, int chunks) {
         this.data = data;
         this.chunks = chunks;
         this.offset = 0;
         this.len = Intervals.numElements(data);
     }
 
-    public Chunk(RandomAccessibleInterval<T> data, long offset, long len) {
+    public Chunk(IterableInterval<T> data, long offset, long len) {
         this(data, offset, len, 1);
     }
 
-    public Chunk(RandomAccessibleInterval<T> data, long offset, long len, int chunks) {
+    public Chunk(IterableInterval<T> data, long offset, long len, int chunks) {
         this.data = data;
         this.offset = offset;
         this.len = len;
         this.chunks = chunks;
     }
 
-    public Chunk(RandomAccessibleInterval<T> data) {
+    public Chunk(IterableInterval<T> data) {
         this(data, 1);
     }
 
     public Cursor<T> localizingCursor() {
-        Cursor<T> cursor = Views.flatIterable(data).localizingCursor();
+        Cursor<T> cursor = data.localizingCursor();
         cursor.jumpFwd(offset);
 
         return new ChunkCursor<>(
@@ -46,7 +45,7 @@ public class Chunk<T> implements Iterable<Chunk<T>> {
     }
 
     public Cursor<T> cursor() {
-        Cursor<T> cursor = Views.flatIterable(data).cursor();
+        Cursor<T> cursor = data.cursor();
         cursor.jumpFwd(offset);
 
         return new ChunkCursor<>(
@@ -79,7 +78,7 @@ public class Chunk<T> implements Iterable<Chunk<T>> {
         return len;
     }
 
-    public RandomAccessibleInterval<T> getData() {
+    public IterableInterval<T> getData() {
         return data;
     }
 

@@ -55,10 +55,10 @@ public class MPIConvolveNaiveC<I extends RealType<I>, O extends RealType<O> & Na
 		implements Ops.Filter.Convolve
 {
 	public void compute(RandomAccessibleInterval<I> input, RandomAccessibleInterval<K> kernel, RandomAccessibleInterval<O> output) {
-		Chunk<O> chunks = new Chunk<>(output, MPIUtils.getSize());
+		Chunk<O> chunks = new Chunk<>(Views.flatIterable(output), MPIUtils.getSize());
 		measureCatch("convolution", () -> process(input, kernel, chunks.getChunk(MPIUtils.getRank())));
 		measureCatch("barrier", MPIUtils::barrier);
-		RandomAccessibleIntervalGatherer.gather(chunks);
+		measureCatch("gather", () -> RandomAccessibleIntervalGatherer.gather(chunks));
 	}
 
 	private void process(RandomAccessibleInterval<I> input, RandomAccessibleInterval<K> kernel, Chunk<O> chunk) {

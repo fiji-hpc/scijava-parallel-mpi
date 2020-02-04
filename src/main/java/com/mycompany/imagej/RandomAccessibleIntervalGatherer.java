@@ -1,23 +1,47 @@
 package com.mycompany.imagej;
 
-import net.imagej.Dataset;
-import net.imagej.ImgPlus;
 import net.imglib2.Cursor;
-import net.imglib2.RandomAccessibleInterval;
 import net.imglib2.img.basictypeaccess.array.ArrayDataAccess;
 import net.imglib2.img.planar.PlanarImg;
 import net.imglib2.type.numeric.RealType;
 import net.imglib2.type.numeric.integer.ByteType;
-import net.imglib2.view.IntervalView;
+import net.imglib2.type.numeric.integer.UnsignedByteType;
 
 import java.util.ArrayList;
 import java.util.List;
 
-import static com.mycompany.imagej.Measure.measureCatch;
-
 public class RandomAccessibleIntervalGatherer {
-   public static <O extends RealType<O>> void gather(Chunk<O> chunk) {
-      RandomAccessibleInterval<O> output = chunk.getData();
+   public static <O extends RealType<O>> void gather(Chunk<O> chunks) {
+      int root = 0;
+      for(Chunk<O> chunk: chunks) {
+         byte[] storage = new byte[(int) chunk.getLen()];
+
+         if(root == MPIUtils.getRank()) {
+            Cursor<O> cursor = chunk.cursor();
+            int i = 0;
+            while (cursor.hasNext()) {
+               cursor.fwd();
+               storage[i++] = ((UnsignedByteType) cursor.get()).getByte();
+            }
+         }
+
+         MPIUtils.MPILibrary.INSTANCE.MPI_Bcast(storage, storage.length, MPIUtils.MPI_BYTE, root++, MPIUtils.MPI_COMM_WORLD);
+
+         if(root != MPIUtils.getRank()) {
+            Cursor<O> cursor = chunk.cursor();
+            int i = 0;
+            while (cursor.hasNext()) {
+               cursor.fwd();
+               ((UnsignedByteType) cursor.get()).setByte(storage[i++]);
+            }
+         }
+
+
+
+      }
+
+      /*
+      Object output = chunk.getData();
       if(output instanceof IntervalView) {
          output = (RandomAccessibleInterval<O>) (((IntervalView<O>) output).getSource());
       }
@@ -30,7 +54,10 @@ public class RandomAccessibleIntervalGatherer {
          output = ((ImgPlus<O>) output).getImg();
       }
 
-      RandomAccessibleInterval<O> finalOutput = output;
+
+      System.out.println(output);
+
+/*      RandomAccessibleInterval<O> finalOutput = output;
       measureCatch("gather", () -> {
          if(System.getenv("B_GATHER_GENERIC") != null) {
             Utils.rootPrint("Gather: gatherGeneric (overridden)");
@@ -42,7 +69,7 @@ public class RandomAccessibleIntervalGatherer {
             Utils.rootPrint("Gather: gatherGeneric");
             gatherGeneric(chunk);
          }
-      });
+      });*/
    }
 
    private static <O extends RealType<O>> void gatherPlanar(Chunk<O> chunks, PlanarImg img) {
@@ -87,7 +114,7 @@ public class RandomAccessibleIntervalGatherer {
          transfer.waitForTransfer();
       }
 
-      private static <O extends RealType<O>> void gatherGeneric(Chunk<O> chunks) {
+   private static <O extends RealType<O>> void gatherGeneric(Chunk<O> chunks) {
       NonBlockingBroadcast b = new NonBlockingBroadcast();
       byte[][] storages = new byte[MPIUtils.getSize()][];
       int c = 0;
