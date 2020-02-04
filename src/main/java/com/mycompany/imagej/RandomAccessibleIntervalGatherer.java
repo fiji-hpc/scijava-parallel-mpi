@@ -11,7 +11,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class RandomAccessibleIntervalGatherer {
-   public static <O extends RealType<O>> void gather(Chunk<O> chunks) {
+   public static <O> void gather(Chunk<O> chunks) {
       int root = 0;
       for(Chunk<O> chunk: chunks) {
          byte[] storage = new byte[(int) chunk.getLen()];

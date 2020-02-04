@@ -2,7 +2,6 @@ package com.mycompany.imagej.ops;
 
 import com.mycompany.imagej.Chunk;
 import com.mycompany.imagej.MPIUtils;
-import com.mycompany.imagej.RandomAccessibleIntervalGatherer;
 import net.imagej.ops.special.computer.AbstractUnaryComputerOp;
 import net.imglib2.Cursor;
 import net.imglib2.RandomAccessible;
@@ -33,7 +32,7 @@ public class DefaultMPIRankColor<I extends RealType<I>, O extends RealType<O>>
             }
         });
 
-        RandomAccessibleIntervalGatherer.gather(chunks);
+        chunks.sync();
 
         /*
         List<RandomAccessibleInterval<O>> blocks = Utils.splitAll(output);

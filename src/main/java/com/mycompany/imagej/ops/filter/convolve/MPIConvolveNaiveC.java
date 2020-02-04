@@ -31,7 +31,6 @@ package com.mycompany.imagej.ops.filter.convolve;
 
 import com.mycompany.imagej.Chunk;
 import com.mycompany.imagej.MPIUtils;
-import com.mycompany.imagej.RandomAccessibleIntervalGatherer;
 import com.mycompany.imagej.Utils;
 import net.imagej.ops.Ops;
 import net.imagej.ops.special.computer.AbstractBinaryComputerOp;
@@ -57,8 +56,7 @@ public class MPIConvolveNaiveC<I extends RealType<I>, O extends RealType<O> & Na
 	public void compute(RandomAccessibleInterval<I> input, RandomAccessibleInterval<K> kernel, RandomAccessibleInterval<O> output) {
 		Chunk<O> chunks = new Chunk<>(Views.flatIterable(output), MPIUtils.getSize());
 		measureCatch("convolution", () -> process(input, kernel, chunks.getChunk(MPIUtils.getRank())));
-		measureCatch("barrier", MPIUtils::barrier);
-		measureCatch("gather", () -> RandomAccessibleIntervalGatherer.gather(chunks));
+		chunks.sync();
 	}
 
 	private void process(RandomAccessibleInterval<I> input, RandomAccessibleInterval<K> kernel, Chunk<O> chunk) {

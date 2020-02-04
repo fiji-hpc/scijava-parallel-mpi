@@ -6,6 +6,8 @@ import net.imglib2.util.Intervals;
 
 import java.util.Iterator;
 
+import static com.mycompany.imagej.Measure.measureCatch;
+
 public class Chunk<T> implements Iterable<Chunk<T>> {
     private IterableInterval<T> data;
     private long offset;
@@ -80,6 +82,11 @@ public class Chunk<T> implements Iterable<Chunk<T>> {
 
     public IterableInterval<T> getData() {
         return data;
+    }
+
+    public void sync() {
+        measureCatch("barrier", MPIUtils::barrier);
+        measureCatch("gather", () -> RandomAccessibleIntervalGatherer.gather(this));
     }
 
     @Override

@@ -2,7 +2,6 @@ package com.mycompany.imagej.ops.transform.project;
 
 import com.mycompany.imagej.Chunk;
 import com.mycompany.imagej.MPIUtils;
-import com.mycompany.imagej.RandomAccessibleIntervalGatherer;
 import net.imagej.ops.Contingent;
 import net.imagej.ops.Ops;
 import net.imagej.ops.Parallel;
@@ -16,8 +15,6 @@ import org.scijava.plugin.Parameter;
 import org.scijava.plugin.Plugin;
 
 import java.util.Iterator;
-
-import static com.mycompany.imagej.Measure.measureCatch;
 
 @Plugin(type = Ops.Transform.Project.class, //
 	priority = 0)
@@ -53,8 +50,7 @@ public class MPIProject<T, V> extends
 			method.compute(new DimensionIterable(input.dimension(dim), access), cursor.get());
 		}
 
-		measureCatch("barrier", MPIUtils::barrier);
-		RandomAccessibleIntervalGatherer.gather((Chunk) chunks);
+		chunks.sync();
 	}
 
 	@Override
