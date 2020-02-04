@@ -29,9 +29,9 @@
 
 package com.mycompany.imagej.ops.filter.convolve;
 
-import com.mycompany.imagej.Chunk;
 import com.mycompany.imagej.MPIUtils;
 import com.mycompany.imagej.Utils;
+import com.mycompany.imagej.chunk.Chunk;
 import net.imagej.ops.Ops;
 import net.imagej.ops.special.computer.AbstractBinaryComputerOp;
 import net.imglib2.Cursor;

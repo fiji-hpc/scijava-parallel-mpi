@@ -1,5 +1,6 @@
 package com.mycompany.imagej;
 
+import com.mycompany.imagej.chunk.Chunk;
 import net.imglib2.img.array.ArrayImg;
 import net.imglib2.util.Fraction;
 import net.imglib2.util.Intervals;

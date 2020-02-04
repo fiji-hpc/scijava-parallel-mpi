@@ -1,5 +1,8 @@
-package com.mycompany.imagej;
+package com.mycompany.imagej.chunk;
 
+import com.mycompany.imagej.MPIUtils;
+import com.mycompany.imagej.Measure;
+import com.mycompany.imagej.gatherer.RandomAccessibleIntervalGatherer;
 import net.imglib2.Cursor;
 import net.imglib2.IterableInterval;
 import net.imglib2.util.Intervals;
@@ -85,7 +88,7 @@ public class Chunk<T> implements Iterable<Chunk<T>> {
     }
 
     public void sync() {
-        measureCatch("barrier", MPIUtils::barrier);
+        Measure.measureCatch("barrier", MPIUtils::barrier);
         measureCatch("gather", () -> RandomAccessibleIntervalGatherer.gather(this));
     }
 

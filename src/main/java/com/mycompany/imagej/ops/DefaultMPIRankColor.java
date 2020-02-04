@@ -1,7 +1,7 @@
 package com.mycompany.imagej.ops;
 
-import com.mycompany.imagej.Chunk;
 import com.mycompany.imagej.MPIUtils;
+import com.mycompany.imagej.chunk.Chunk;
 import net.imagej.ops.special.computer.AbstractUnaryComputerOp;
 import net.imglib2.Cursor;
 import net.imglib2.RandomAccessible;

@@ -1,4 +1,4 @@
-package com.mycompany.imagej;
+package com.mycompany.imagej.chunk;
 
 import net.imglib2.Cursor;
 import net.imglib2.Sampler;

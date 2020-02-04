@@ -1,7 +1,7 @@
 package com.mycompany.imagej.ops.transform.project;
 
-import com.mycompany.imagej.Chunk;
 import com.mycompany.imagej.MPIUtils;
+import com.mycompany.imagej.chunk.Chunk;
 import net.imagej.ops.Contingent;
 import net.imagej.ops.Ops;
 import net.imagej.ops.Parallel;
