@@ -70,8 +70,10 @@ benchrun() {
 			(
         echo "## $nodes nodes"
         echo $cmd;
-        $cmd < /dev/null
+        /usr/bin/time -f "%e" -o elapsed_time $cmd < /dev/null
       ) |& tee -a out
+      awk "{printf \"total_time,1,$nodes,$round,%d\n\", \$1*1000}" elapsed_time >> stats.csv
+      rm elapsed_time
 		done
 	)
 }
