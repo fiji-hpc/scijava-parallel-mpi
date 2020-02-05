@@ -87,7 +87,7 @@ public class MPIConvolveNaiveC<I extends RealType<I>, O extends RealType<O> & Na
 					outC.localize(pos);
 
 					// kernel inlined version of the method convolve
-					float val = 0;
+					double val = 0;
 					inRA.setPosition(pos);
 
 					kernelC.reset();
