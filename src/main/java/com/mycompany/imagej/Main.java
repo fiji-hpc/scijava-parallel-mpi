@@ -79,7 +79,7 @@ public class Main {
                 ij.op().run(MPIRankColor.class, output, input);
             } else if (op.equals("convolution")) {
                 convolution(ij, (RandomAccessibleInterval) input, (RandomAccessibleInterval) output);
-            } else if(op.equals("zproject")) {
+            } else if(op.equals("project")) {
                 long[] dims = new long[input.numDimensions() - 1];
                 for(int j = 0; j < input.numDimensions() - 1; j++) {
                     dims[j] = input.dimension(j);
