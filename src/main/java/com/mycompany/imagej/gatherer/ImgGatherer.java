@@ -17,7 +17,7 @@ public class ImgGatherer<O> extends AbstractGatherer<O> {
         ArrayImg img = (ArrayImg) source;
         NonBlockingBroadcast transfer = new NonBlockingBroadcast();
         int root = 0;
-        for(Chunk<O> chunk: chunks) {
+        for(Chunk<O> chunk: chunks.allChunks()) {
             transfer.requestTransfer(
                     root++,
                     (ArrayDataAccess) img.update(null),

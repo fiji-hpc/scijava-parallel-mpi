@@ -25,7 +25,7 @@ public class PlanarGatherer<O> extends AbstractGatherer<O> {
         int planeOffset = 0;
         int lastPlane = 0;
 
-        for(Chunk<O> chunk: chunks) {
+        for(Chunk<O> chunk: chunks.allChunks()) {
             List<NonBlockingBroadcast.Block> transferBlocks = new ArrayList<>();
 
             long sent = 0;

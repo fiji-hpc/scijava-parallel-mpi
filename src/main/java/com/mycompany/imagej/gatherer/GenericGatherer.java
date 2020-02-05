@@ -17,7 +17,7 @@ public class GenericGatherer<O> implements Gatherer<O> {
         ArrayTransfer access = createArrayAccess(chunks);
         int root = 0;
 
-        for (Chunk<O> chunk : chunks) {
+        for (Chunk<O> chunk : chunks.allChunks()) {
             access.allocate((int) chunk.getLen());
 
             if (root == MPIUtils.getRank()) {

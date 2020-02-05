@@ -1,10 +1,9 @@
 package com.mycompany.imagej.ops.transform.project;
 
-import com.mycompany.imagej.MPIUtils;
 import com.mycompany.imagej.chunk.Chunk;
+import com.mycompany.imagej.ops.parallel.Parallel;
 import net.imagej.ops.Contingent;
 import net.imagej.ops.Ops;
-import net.imagej.ops.Parallel;
 import net.imagej.ops.special.computer.AbstractUnaryComputerOp;
 import net.imagej.ops.special.computer.UnaryComputerOp;
 import net.imglib2.Cursor;
@@ -15,12 +14,13 @@ import org.scijava.plugin.Parameter;
 import org.scijava.plugin.Plugin;
 
 import java.util.Iterator;
+import java.util.function.Consumer;
 
 @Plugin(type = Ops.Transform.Project.class, //
 	priority = 0)
 public class MPIProject<T, V> extends
 	AbstractUnaryComputerOp<RandomAccessibleInterval<T>, IterableInterval<V>>
-	implements Contingent, Parallel, Ops.Transform.Project
+	implements Contingent, Ops.Transform.Project
 {
 
 	@Parameter
@@ -34,23 +34,21 @@ public class MPIProject<T, V> extends
 	public void compute(final RandomAccessibleInterval<T> input,
 		final IterableInterval<V> output)
 	{
-		Chunk<V> chunks = new Chunk<>(output, MPIUtils.getSize());
+		this.ops().run(Parallel.class, output, (Consumer<Chunk<V>>) chunk -> {
+			RandomAccess<T> access = input.randomAccess();
+			Cursor<V> cursor = chunk.cursor();
 
-		Cursor<V> cursor = chunks.getChunk(MPIUtils.getRank()).localizingCursor();
-		RandomAccess<T> access = input.randomAccess();
-
-		while (cursor.hasNext()) {
-			cursor.fwd();
-			for (int d = 0; d < input.numDimensions(); d++) {
-				if (d != dim) {
-					access.setPosition(cursor.getIntPosition(d - (d > dim ? 1 : 0)), d);
+			while (cursor.hasNext()) {
+				cursor.fwd();
+				for (int d = 0; d < input.numDimensions(); d++) {
+					if (d != dim) {
+						access.setPosition(cursor.getIntPosition(d - (d > dim ? 1 : 0)), d);
+					}
 				}
+
+				method.compute(new DimensionIterable(input.dimension(dim), access), cursor.get());
 			}
-
-			method.compute(new DimensionIterable(input.dimension(dim), access), cursor.get());
-		}
-
-		chunks.sync();
+		});
 	}
 
 	@Override
