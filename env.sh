@@ -67,13 +67,17 @@ benchrun() {
 
 			P="-agentpath:$HOME/profiler/libasyncProfiler.so=start,alluser,file=$output_dir/profile.%p.svg,interval=1ms"
 			cmd="mpirun --bind-to none --oversubscribe -np $nodes java $P com.mycompany.imagej.Main $op  $DIR/run/datasets/$dataset $nodes/result.tiff"
-			(
-        echo "## $nodes nodes"
-        echo $cmd;
-        /usr/bin/time -f "%e" -o elapsed_time $cmd < /dev/null
-      ) |& tee -a out
-      awk "{printf \"total_time,1,$nodes,$round,%d\n\", \$1*1000}" elapsed_time >> stats.csv
-      rm elapsed_time
+      echo -e "\n## $nodes nodes" >> out
+      for round in $(seq 1 $B_ROUNDS); do
+        (
+          echo -e "\n### Round $round"
+          echo $cmd;
+          export B_CURRENT_ROUND=$round
+          /usr/bin/time -f "%e" -o elapsed_time $cmd < /dev/null
+        ) |& tee -a out
+        awk "{printf \"total_time,1,$nodes,$round,%d\n\", \$1*1000}" elapsed_time >> stats.csv
+        rm elapsed_time
+      done
 		done
 	)
 }

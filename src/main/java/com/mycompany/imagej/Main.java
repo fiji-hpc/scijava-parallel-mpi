@@ -67,42 +67,30 @@ public class Main {
 
         RandomAccessibleInterval<? extends NativeType<?>> output = ij.op().create().img(input);
 
-        int rounds = 1;
-        if(System.getenv("B_ROUNDS") != null) {
-            rounds = Integer.parseInt(System.getenv("B_ROUNDS"));
-        }
-        for(int i = 0; i < rounds; i++) {
-            Utils.rootPrint("### Round " + i);
-            MPIUtils.barrier();
-
-            if (op.equals("rank_color")) {
-                ij.op().run(MPIRankColor.class, output, input);
-            } else if (op.equals("convolution")) {
-                convolution(ij, (RandomAccessibleInterval) input, (RandomAccessibleInterval) output);
-            } else if(op.equals("project")) {
-                long[] dims = new long[input.numDimensions() - 1];
-                for(int j = 0; j < input.numDimensions() - 1; j++) {
-                    dims[j] = input.dimension(j);
-                }
-
-                output = ij.op().create().img(new FinalDimensions(dims), (NativeType) input.getType());
-
-                UnaryComputerOp mean_op = (UnaryComputerOp) ij.op().op(Ops.Stats.Max.NAME,
-                            input.getImgPlus());
-
-                ij.op().transform().project(
-                        new IterableRandomAccessibleInterval<>(output),
-                        input,
-                        mean_op,
-                        input.numDimensions() - 1
-                );
-            } else {
-                System.err.println("Unknown op: " + op);
-                System.exit(1);
+        if (op.equals("rank_color")) {
+            ij.op().run(MPIRankColor.class, output, input);
+        } else if (op.equals("convolution")) {
+            convolution(ij, (RandomAccessibleInterval) input, (RandomAccessibleInterval) output);
+        } else if(op.equals("project")) {
+            long[] dims = new long[input.numDimensions() - 1];
+            for(int j = 0; j < input.numDimensions() - 1; j++) {
+                dims[j] = input.dimension(j);
             }
 
-            MPIUtils.barrier();
-            Measure.nextRound();
+            output = ij.op().create().img(new FinalDimensions(dims), (NativeType) input.getType());
+
+            UnaryComputerOp mean_op = (UnaryComputerOp) ij.op().op(Ops.Stats.Max.NAME,
+                        input.getImgPlus());
+
+            ij.op().transform().project(
+                    new IterableRandomAccessibleInterval<>(output),
+                    input,
+                    mean_op,
+                    input.numDimensions() - 1
+            );
+        } else {
+            System.err.println("Unknown op: " + op);
+            System.exit(1);
         }
 
         if (MPIUtils.isRoot()) {
@@ -114,7 +102,6 @@ public class Main {
                 ij.scifio().datasetIO().save(ij.dataset().create(finalOutput), outputPath, config);
             });
         }
-        MPIUtils.barrier();
     }
 
     private static <I extends RealType<I>, O extends RealType<O>> void convolution(ImageJ ij, RandomAccessibleInterval<I> input, RandomAccessibleInterval<O> output) {

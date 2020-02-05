@@ -3,8 +3,6 @@ package com.mycompany.imagej;
 import java.io.FileOutputStream;
 
 public class Measure {
-    private static int round = 0;
-
     public interface Runnable {
         void run() throws Exception;
     }
@@ -13,15 +11,16 @@ public class Measure {
         T run() throws Exception;
     }
 
-    public static void nextRound() {
-        round++;
-    }
-
     public static <T> T measure(String desc, Supplier<T> cb) throws Exception {
         long start = System.nanoTime();
         T ret = cb.run();
         int time_ms = (int) ((System.nanoTime() - start) / 1000000.0);
         System.out.println(desc + ": " + time_ms / 1000.0 + "s");
+
+        int round = 0;
+        if(System.getenv("B_CURRENT_ROUND") != null) {
+            round = Integer.parseInt(System.getenv("B_CURRENT_ROUND"));
+        }
 
         try(FileOutputStream out = new FileOutputStream("stats.csv", true)) {
   //          FileLock lock = out.getChannel().lock();
