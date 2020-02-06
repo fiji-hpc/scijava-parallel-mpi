@@ -12,6 +12,8 @@ public class MPIUtils {
     public static Pointer MPI_UNSIGNED_LONG;
     public static Pointer MPI_FLOAT;
     public static Pointer MPI_DOUBLE;
+    public static Pointer MPI_OP_MIN;
+    public static Pointer MPI_OP_MAX;
 
     public static Pointer MPI_COMM_WORLD;
 
@@ -83,7 +85,7 @@ public class MPIUtils {
         checkMpiResult(MPILibrary.INSTANCE.MPI_Recv(buf, count, datatype, dest, tag, comm, status));
     }
 
-    public static void Allreduce(float[] sendbuf, float[] recvbuf, int count, Pointer datatype, Pointer op, Pointer comm) {
+    public static void Allreduce(double[] sendbuf, double[] recvbuf, int count, Pointer datatype, Pointer op, Pointer comm) {
         checkMpiResult(MPILibrary.INSTANCE.MPI_Allreduce(sendbuf, recvbuf, count, datatype, op, comm));
     }
 
@@ -107,7 +109,7 @@ public class MPIUtils {
         int MPI_Type_contiguous(int count, Pointer old, PointerByReference newType);
         int MPI_Type_commit(PointerByReference type);
         int MPI_Get_processor_name(byte[] name, int []resultlen);
-        int MPI_Allreduce(float[] sendbuf, float[] recvbuf, int count, Pointer datatype, Pointer op, Pointer comm);
+        int MPI_Allreduce(double[] sendbuf, double[] recvbuf, int count, Pointer datatype, Pointer op, Pointer comm);
         int MPI_Send(long buf, int count, Pointer datatype, int dest, int tag, Pointer comm);
         int MPI_Recv(long buf, int count, Pointer datatype, int dest, int tag, Pointer comm, Pointer status);
         int MPI_Ibcast(Memory buffer, int count, Pointer datatype, int root, Pointer comm, PointerByReference request);

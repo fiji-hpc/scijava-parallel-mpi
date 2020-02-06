@@ -4,6 +4,7 @@ import com.mycompany.imagej.ops.MPIRankColor;
 import io.scif.config.SCIFIOConfig;
 import net.imagej.Dataset;
 import net.imagej.ImageJ;
+import net.imagej.ImgPlus;
 import net.imagej.ops.Ops;
 import net.imagej.ops.special.computer.UnaryComputerOp;
 import net.imglib2.FinalDimensions;
@@ -11,6 +12,7 @@ import net.imglib2.RandomAccessibleInterval;
 import net.imglib2.type.NativeType;
 import net.imglib2.type.numeric.RealType;
 import net.imglib2.type.numeric.real.DoubleType;
+import net.imglib2.util.Pair;
 import net.imglib2.view.IterableRandomAccessibleInterval;
 
 import static com.mycompany.imagej.Measure.measure;
@@ -73,14 +75,14 @@ public class Main {
             convolution(ij, (RandomAccessibleInterval) input, (RandomAccessibleInterval) output);
         } else if(op.equals("project")) {
             long[] dims = new long[input.numDimensions() - 1];
-            for(int j = 0; j < input.numDimensions() - 1; j++) {
+            for (int j = 0; j < input.numDimensions() - 1; j++) {
                 dims[j] = input.dimension(j);
             }
 
             output = ij.op().create().img(new FinalDimensions(dims), (NativeType) input.getType());
 
             UnaryComputerOp mean_op = (UnaryComputerOp) ij.op().op(Ops.Stats.Max.NAME,
-                        input.getImgPlus());
+                    input.getImgPlus());
 
             ij.op().transform().project(
                     new IterableRandomAccessibleInterval<>(output),
@@ -88,6 +90,11 @@ public class Main {
                     mean_op,
                     input.numDimensions() - 1
             );
+        } else if(op.equals("minmax")) {
+            Pair result = ij.op().stats().minMax((ImgPlus) input.getImgPlus());
+            System.out.println("min: " + result.getA());
+            System.out.println("max: " + result.getB());
+
         } else {
             System.err.println("Unknown op: " + op);
             System.exit(1);
