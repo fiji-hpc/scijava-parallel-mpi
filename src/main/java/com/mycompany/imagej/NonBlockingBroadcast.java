@@ -85,7 +85,7 @@ public class NonBlockingBroadcast {
         private void requestTransfer() {
             // copy data only from root rank
             if(MPIUtils.getRank() == root) {
-                int offset = 0;
+                long offset = 0;
                 for(Block block: blocks) {
                     if (block.array instanceof byte[]) {
                         memory.write(offset, (byte[]) block.array, block.offset, block.len);
@@ -120,7 +120,7 @@ public class NonBlockingBroadcast {
 
         public void finishTransfer() {
             if(MPIUtils.getRank() != root) {
-                int offset = 0;
+                long offset = 0;
                 for(Block block: blocks) {
                     if(block.array instanceof byte[]) {
                         memory.read(offset, (byte[]) block.array, block.offset, block.len);
