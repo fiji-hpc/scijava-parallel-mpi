@@ -45,6 +45,8 @@ import org.scijava.plugin.Plugin;
 
 import java.util.function.Consumer;
 
+import static com.mycompany.imagej.Measure.measureCatch;
+
 @Plugin(type = Ops.Filter.Convolve.class, priority = 1000.0D, attrs = {@Attr(name = "MPI", value="true")})
 public class MPIConvolveNaiveC<I extends RealType<I>, O extends RealType<O> & NativeType<O>, K extends RealType<K>, C extends ComplexType<C> & NativeType<C>> extends AbstractBinaryComputerOp<RandomAccessibleInterval<I>, RandomAccessibleInterval<K>, RandomAccessibleInterval<O>>
 		implements Ops.Filter.Convolve
@@ -55,38 +57,40 @@ public class MPIConvolveNaiveC<I extends RealType<I>, O extends RealType<O> & Na
 			kernelRadius[i] = kernel.dimension(i) / 2;
 		}
 
-		this.ops().run(Parallel.class, output, (Consumer<Chunk<O>>) chunk -> {
-			final Cursor<O> outC = chunk.cursor();
-			final Cursor<K> kernelC = Views.iterable(kernel).localizingCursor();
-			RandomAccess<I> inRA = Views.extendMirrorSingle(input).randomAccess();
-			final long[] pos = new long[input.numDimensions()];
+		measureCatch("convolution", () -> {
+			this.ops().run(Parallel.class, output, (Consumer<Chunk<O>>) chunk -> {
+				final Cursor<O> outC = chunk.cursor();
+				final Cursor<K> kernelC = Views.iterable(kernel).localizingCursor();
+				RandomAccess<I> inRA = Views.extendMirrorSingle(input).randomAccess();
+				final long[] pos = new long[input.numDimensions()];
 
-			while (outC.hasNext()) {
-				// image
-				outC.fwd();
-				outC.localize(pos);
+				while (outC.hasNext()) {
+					// image
+					outC.fwd();
+					outC.localize(pos);
 
-				// kernel inlined version of the method convolve
-				double val = 0;
-				inRA.setPosition(pos);
+					// kernel inlined version of the method convolve
+					double val = 0;
+					inRA.setPosition(pos);
 
-				kernelC.reset();
-				while (kernelC.hasNext()) {
-					kernelC.fwd();
+					kernelC.reset();
+					while (kernelC.hasNext()) {
+						kernelC.fwd();
 
-					for (int i = 0; i < kernelRadius.length; i++) {
-						// dimension can have zero extension e.g. vertical 1d kernel
-						if (kernelRadius[i] > 0) {
-							inRA.setPosition(pos[i] + kernelC.getLongPosition(i) -
-									kernelRadius[i], i);
+						for (int i = 0; i < kernelRadius.length; i++) {
+							// dimension can have zero extension e.g. vertical 1d kernel
+							if (kernelRadius[i] > 0) {
+								inRA.setPosition(pos[i] + kernelC.getLongPosition(i) -
+										kernelRadius[i], i);
+							}
 						}
+
+						val += inRA.get().getRealDouble() * kernelC.get().getRealDouble();
 					}
 
-					val += inRA.get().getRealDouble() * kernelC.get().getRealDouble();
+					outC.get().setReal(val);
 				}
-
-				outC.get().setReal(val);
-			}
-        });
+			});
+		});
 	}
 }
