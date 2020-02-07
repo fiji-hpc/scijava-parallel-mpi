@@ -59,7 +59,7 @@ public class Main {
         System.exit(0);
     }
 
-    private static void run(String[] args) throws Exception {
+    private static <T extends RealType<T>> void run(String[] args) throws Exception {
         if(args.length == 0) {
             System.err.println("Missing operation argument");
             System.exit(1);
@@ -101,14 +101,25 @@ public class Main {
         } else if(op.equals("threshold")) {
             Img<BitType> result = ij.op().create().img(input, new BitType());
 
+            double min = input.firstElement().getMinValue();
+            double max = input.firstElement().getMaxValue();
+            T threshold = (T) input.firstElement().createVariable();
+            threshold.setReal((max - min) / 2.0);
+
+            T maxVal = (T) input.firstElement().createVariable();
+            maxVal.setReal(input.firstElement().getMaxValue());
+
             ij.op().threshold().apply(
                     result,
                     new IterableRandomAccessibleInterval(input),
-                    new UnsignedByteType(128)
+                    threshold
             );
 
             output = ij.op().convert().uint8(result);
-            output = (RandomAccessibleInterval) ij.op().math().multiply((IterableInterval<UnsignedByteType>) output, new UnsignedByteType(255));
+            output = (RandomAccessibleInterval) ij.op().math().multiply(
+                    (IterableInterval<UnsignedByteType>) output,
+                    new UnsignedByteType(255)
+            );
         } else {
             System.err.println("Unknown op: " + op);
             System.exit(1);
