@@ -74,9 +74,9 @@ benchrun() {
           echo $cmd;
           export B_CURRENT_ROUND=$round
           /usr/bin/time -f "%e" -o elapsed_time $cmd < /dev/null
+          awk "{printf \"total_time,1,$nodes,$round,%d\n\", \$1*1000}" elapsed_time | tee -a stats.csv
+          rm elapsed_time
         ) |& tee -a out
-        awk "{printf \"total_time,1,$nodes,$round,%d\n\", \$1*1000}" elapsed_time >> stats.csv
-        rm elapsed_time
       done
 		done
 	)
