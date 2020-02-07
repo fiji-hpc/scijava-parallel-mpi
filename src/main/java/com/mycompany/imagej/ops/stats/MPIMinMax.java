@@ -10,6 +10,7 @@ import net.imglib2.IterableInterval;
 import net.imglib2.type.numeric.RealType;
 import net.imglib2.util.Pair;
 import net.imglib2.util.ValuePair;
+import org.scijava.plugin.Attr;
 import org.scijava.plugin.Parameter;
 import org.scijava.plugin.Plugin;
 import org.scijava.thread.ThreadService;
@@ -20,7 +21,7 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 
-@Plugin(type = Ops.Stats.MinMax.class, priority = 2)
+@Plugin(type = Ops.Stats.MinMax.class, priority = 2, attrs = {@Attr(name = "MPI", value="true")})
 public class MPIMinMax<I extends RealType<I>> extends AbstractUnaryFunctionOp<IterableInterval<I>, Pair<I, I>> implements Ops.Stats.MinMax {
     @Parameter
     public ThreadService threadService;

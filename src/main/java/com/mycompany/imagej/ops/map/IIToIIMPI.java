@@ -7,11 +7,12 @@ import net.imagej.ops.Ops;
 import net.imagej.ops.map.AbstractMapComputer;
 import net.imagej.ops.map.Maps;
 import net.imglib2.IterableInterval;
+import org.scijava.plugin.Attr;
 import org.scijava.plugin.Plugin;
 
 import java.util.function.Consumer;
 
-@Plugin(type = Ops.Map.class, priority = 40)
+@Plugin(type = Ops.Map.class, priority = 40, attrs = {@Attr(name = "MPI", value="true")})
 public class IIToIIMPI<EI, EO> extends
     AbstractMapComputer<EI, EO, IterableInterval<EI>, IterableInterval<EO>>
         implements Contingent {

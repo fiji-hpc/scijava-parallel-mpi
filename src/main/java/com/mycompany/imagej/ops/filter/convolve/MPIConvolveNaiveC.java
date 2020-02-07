@@ -40,11 +40,12 @@ import net.imglib2.type.NativeType;
 import net.imglib2.type.numeric.ComplexType;
 import net.imglib2.type.numeric.RealType;
 import net.imglib2.view.Views;
+import org.scijava.plugin.Attr;
 import org.scijava.plugin.Plugin;
 
 import java.util.function.Consumer;
 
-@Plugin(type = Ops.Filter.Convolve.class, priority = 1000.0D)
+@Plugin(type = Ops.Filter.Convolve.class, priority = 1000.0D, attrs = {@Attr(name = "MPI", value="true")})
 public class MPIConvolveNaiveC<I extends RealType<I>, O extends RealType<O> & NativeType<O>, K extends RealType<K>, C extends ComplexType<C> & NativeType<C>> extends AbstractBinaryComputerOp<RandomAccessibleInterval<I>, RandomAccessibleInterval<K>, RandomAccessibleInterval<O>>
 		implements Ops.Filter.Convolve
 {
