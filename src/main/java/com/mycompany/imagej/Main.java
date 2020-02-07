@@ -8,9 +8,13 @@ import net.imagej.ImgPlus;
 import net.imagej.ops.Ops;
 import net.imagej.ops.special.computer.UnaryComputerOp;
 import net.imglib2.FinalDimensions;
+import net.imglib2.IterableInterval;
 import net.imglib2.RandomAccessibleInterval;
+import net.imglib2.img.Img;
 import net.imglib2.type.NativeType;
+import net.imglib2.type.logic.BitType;
 import net.imglib2.type.numeric.RealType;
+import net.imglib2.type.numeric.integer.UnsignedByteType;
 import net.imglib2.type.numeric.real.DoubleType;
 import net.imglib2.util.Pair;
 import net.imglib2.view.IterableRandomAccessibleInterval;
@@ -94,7 +98,17 @@ public class Main {
             Pair result = ij.op().stats().minMax((ImgPlus) input.getImgPlus());
             System.out.println("min: " + result.getA());
             System.out.println("max: " + result.getB());
+        } else if(op.equals("threshold")) {
+            Img<BitType> result = ij.op().create().img(input, new BitType());
 
+            ij.op().threshold().apply(
+                    result,
+                    new IterableRandomAccessibleInterval(input),
+                    new UnsignedByteType(128)
+            );
+
+            output = ij.op().convert().uint8(result);
+            output = (RandomAccessibleInterval) ij.op().math().multiply((IterableInterval<UnsignedByteType>) output, new UnsignedByteType(255));
         } else {
             System.err.println("Unknown op: " + op);
             System.exit(1);
