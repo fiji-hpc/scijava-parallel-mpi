@@ -18,6 +18,7 @@ import net.imglib2.type.numeric.integer.UnsignedByteType;
 import net.imglib2.type.numeric.real.DoubleType;
 import net.imglib2.util.Pair;
 import net.imglib2.view.IterableRandomAccessibleInterval;
+import net.imglib2.view.Views;
 
 import static com.mycompany.imagej.Measure.measure;
 import static com.mycompany.imagej.Measure.measureCatch;
@@ -140,7 +141,7 @@ public class Main {
         measureCatch("total_convolution", () -> {
             ij.op().filter().convolve(
                     output,
-                    input,
+                    Views.extendMirrorSingle(input),
                     ij.op().create().kernel(getKernel(), new DoubleType())
             );
         });
