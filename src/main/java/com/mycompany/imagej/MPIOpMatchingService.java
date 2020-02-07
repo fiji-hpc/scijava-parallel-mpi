@@ -14,6 +14,13 @@ import java.util.List;
 @Plugin(type = Service.class, priority = 10000)
 public class MPIOpMatchingService extends DefaultOpMatchingService {
     @Override
+    public OpCandidate findMatch(OpEnvironment ops, List<OpRef> refs) {
+        OpCandidate candidate = super.findMatch(ops, refs);
+        System.out.println("OP: " + candidate.getModule());
+        return candidate;
+    }
+
+    @Override
     public List<OpCandidate> findCandidates(OpEnvironment ops, List<OpRef> refs) {
         boolean enableMPIOps = System.getenv("B_NO_MPI_OPS") == null;
 
@@ -25,9 +32,7 @@ public class MPIOpMatchingService extends DefaultOpMatchingService {
                 if(!enableMPIOps) {
                     continue;
                 }
-                System.out.println("Using MPI op: " + info.getDelegateClassName());
             }
-
             matches.add(candidate);
         }
 
