@@ -59,7 +59,7 @@ public class MPIConvolveNaiveC<I extends RealType<I>, O extends RealType<O> & Na
 
 		measureCatch("convolution", () -> {
 			this.ops().run(Parallel.class, output, (Consumer<Chunk<O>>) chunk -> {
-				final Cursor<O> outC = chunk.cursor();
+				final Cursor<O> outC = chunk.localizingCursor();
 				final Cursor<K> kernelC = Views.iterable(kernel).localizingCursor();
 				RandomAccess<I> inRA = Views.extendMirrorSingle(input).randomAccess();
 				final long[] pos = new long[input.numDimensions()];
