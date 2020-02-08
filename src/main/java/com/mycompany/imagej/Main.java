@@ -9,7 +9,9 @@ import net.imagej.ops.Ops;
 import net.imagej.ops.special.computer.UnaryComputerOp;
 import net.imglib2.FinalDimensions;
 import net.imglib2.IterableInterval;
+import net.imglib2.RandomAccessible;
 import net.imglib2.RandomAccessibleInterval;
+import net.imglib2.algorithm.neighborhood.RectangleShape;
 import net.imglib2.img.Img;
 import net.imglib2.type.NativeType;
 import net.imglib2.type.logic.BitType;
@@ -133,7 +135,22 @@ public class Main {
                     new IterableRandomAccessibleInterval<T>((RandomAccessibleInterval<T>) input),
                     scalar
             );
-
+        } else if(op.equals("gauss")) {
+            output = ij.op().create().img(input);
+            ij.op().filter().gauss(
+                    (RandomAccessibleInterval) output,
+                    (RandomAccessible) Views.extendMirrorSingle(input),
+                    1.0D,
+                    1.0D,
+                    1.0D
+            );
+        } else if(op.equals("filter.max")) {
+            output = ij.op().create().img(input);
+            ij.op().filter().max(
+                    new IterableRandomAccessibleInterval(output),
+                    (RandomAccessibleInterval) input,
+                    new RectangleShape(5, false)
+            );
         } else {
             System.err.println("Unknown op: " + op);
             System.exit(1);
