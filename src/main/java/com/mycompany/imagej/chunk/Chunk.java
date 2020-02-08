@@ -45,11 +45,9 @@ public class Chunk<T> implements IterableInterval<T> {
     }
 
     public Cursor<T> localizingCursor() {
-        Cursor<T> cursor = data.localizingCursor();
-        cursor.jumpFwd(offset);
-
         return new ChunkCursor<>(
-                cursor,
+                data.localizingCursor(),
+                offset,
                 len
         );
     }
@@ -70,11 +68,9 @@ public class Chunk<T> implements IterableInterval<T> {
     }
 
     public Cursor<T> cursor() {
-        Cursor<T> cursor = data.cursor();
-        cursor.jumpFwd(offset);
-
         return new ChunkCursor<>(
-                cursor,
+                data.cursor(),
+                offset,
                 len
         );
     }

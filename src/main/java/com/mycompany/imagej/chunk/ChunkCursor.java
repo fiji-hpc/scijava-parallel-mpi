@@ -9,6 +9,12 @@ public class ChunkCursor<T> implements Cursor<T> {
     private long remaining;
 
     public ChunkCursor(Cursor<T> cursor, long count) {
+        this(cursor, 0, count);
+    }
+
+    public ChunkCursor(Cursor<T> cursor, long offset, long count) {
+        cursor.jumpFwd(offset);
+
         this.cursor = cursor;
         this.count = count;
         this.remaining = count;
