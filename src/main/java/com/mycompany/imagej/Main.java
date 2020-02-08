@@ -145,11 +145,13 @@ public class Main {
                     1.0D
             );
         } else if(op.equals("filter.max")) {
+            int neighSize = Integer.parseInt(System.getenv("B_NEIGH_SIZE"));
+
             output = ij.op().create().img(input);
             ij.op().filter().max(
                     new IterableRandomAccessibleInterval(output),
                     (RandomAccessibleInterval) input,
-                    new RectangleShape(5, false)
+                    new RectangleShape(neighSize, false)
             );
         } else {
             System.err.println("Unknown op: " + op);
