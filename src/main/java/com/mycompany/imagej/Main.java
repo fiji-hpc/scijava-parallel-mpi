@@ -72,11 +72,13 @@ public class Main {
         Dataset input = measure("read", () -> ij.scifio().datasetIO().open(inputPath, createSCIFIOConfig()));
         Utils.rootPrint("Input image: " + input.getImgPlus().getImg());
 
-        RandomAccessibleInterval<? extends NativeType<?>> output = ij.op().create().img(input);
+        RandomAccessibleInterval<? extends NativeType<?>> output = null;
 
         if (op.equals("rank_color")) {
+            output = ij.op().create().img(input);
             ij.op().run(MPIRankColor.class, output, input);
         } else if (op.equals("convolution")) {
+            output = ij.op().create().img(input);
             convolution(ij, (RandomAccessibleInterval) input, (RandomAccessibleInterval) output);
         } else if(op.equals("project")) {
             long[] dims = new long[input.numDimensions() - 1];
@@ -121,12 +123,23 @@ public class Main {
                     (IterableInterval<UnsignedByteType>) output,
                     new UnsignedByteType(255)
             );
+        } else if(op.equals("add")) {
+            T scalar = (T) input.firstElement().createVariable();
+            scalar.setReal(2);
+
+            output = ij.op().create().img(input);
+            ij.op().math().add(
+                    (RandomAccessibleInterval<T>) output,
+                    new IterableRandomAccessibleInterval<T>((RandomAccessibleInterval<T>) input),
+                    scalar
+            );
+
         } else {
             System.err.println("Unknown op: " + op);
             System.exit(1);
         }
 
-        if (MPIUtils.isRoot()) {
+        if (MPIUtils.isRoot() && output != null) {
             SCIFIOConfig config = new SCIFIOConfig();
             config.writerSetSequential(true);
             config.writerSetCompression("Uncompressed");
