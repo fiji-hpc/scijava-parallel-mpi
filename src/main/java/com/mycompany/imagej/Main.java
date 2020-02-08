@@ -2,6 +2,10 @@ package com.mycompany.imagej;
 
 import com.mycompany.imagej.ops.MPIRankColor;
 import io.scif.config.SCIFIOConfig;
+import net.haesleinhuepf.clij.CLIJ;
+import net.haesleinhuepf.clij.ops.CLIJ_blur.CLIJ_blur;
+import net.haesleinhuepf.clij.ops.CLIJ_pull.CLIJ_pull;
+import net.haesleinhuepf.clij.ops.CLIJ_push.CLIJ_push;
 import net.imagej.Dataset;
 import net.imagej.ImageJ;
 import net.imagej.ImgPlus;
@@ -153,6 +157,13 @@ public class Main {
                     (RandomAccessibleInterval) input,
                     new RectangleShape(neighSize, false)
             );
+        } else if(op.equals("clij.convol")) {
+            Object inputGPU = ij.op().run(CLIJ_push.class, input);
+            Object blurred = ij.op().run(CLIJ_blur.class, inputGPU, 5, 5, 1);
+
+            Object result = ij.op().run(CLIJ_pull.class, blurred);
+    		ij.ui().show("blurred", result);
+
         } else {
             System.err.println("Unknown op: " + op);
             System.exit(1);
