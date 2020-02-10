@@ -2,8 +2,8 @@ package com.mycompany.imagej;
 
 import com.mycompany.imagej.ops.MPIRankColor;
 import io.scif.config.SCIFIOConfig;
-import net.haesleinhuepf.clij.CLIJ;
-import net.haesleinhuepf.clij.ops.CLIJ_blur.CLIJ_blur;
+import net.haesleinhuepf.clij.ops.CLIJ_create.CLIJ_create;
+import net.haesleinhuepf.clij.ops.CLIJ_maximumBox.CLIJ_maximumBox;
 import net.haesleinhuepf.clij.ops.CLIJ_pull.CLIJ_pull;
 import net.haesleinhuepf.clij.ops.CLIJ_push.CLIJ_push;
 import net.imagej.Dataset;
@@ -157,12 +157,28 @@ public class Main {
                     (RandomAccessibleInterval) input,
                     new RectangleShape(neighSize, false)
             );
-        } else if(op.equals("clij.convol")) {
+//            ij.ui().show("blurred", output);
+//            Thread.sleep(100000);
+        } else if(op.equals("clij.filter.max")) {
+            /*
             Object inputGPU = ij.op().run(CLIJ_push.class, input);
-            Object blurred = ij.op().run(CLIJ_blur.class, inputGPU, 5, 5, 1);
+            Object kernelGPU = ij.op().run(
+                    CLIJ_push.class,
+                    ij.op().create().kernel(getKernel(), new FloatType())
+            );
 
-            Object result = ij.op().run(CLIJ_pull.class, blurred);
-    		ij.ui().show("blurred", result);
+            Object outputGPU = ij.op().run(CLIJ_create.class, input);
+            ij.op().run(CLIJ_Convolve.class, inputGPU, kernelGPU, outputGPU);
+
+            Object result = ij.op().run(CLIJ_pull.class, outputGPU);
+    		ij.ui().show("blurred", result);*/
+
+            Object inputGPU = ij.op().run(CLIJ_push.class, input);
+            Object outputGPU = ij.op().run(CLIJ_create.class, input);
+            ij.op().run(CLIJ_maximumBox.class, outputGPU, inputGPU, 3, 3, 3);
+            Object result = ij.op().run(CLIJ_pull.class, outputGPU);
+//            ij.ui().show("blurred", result);
+//    		Thread.sleep(100000);
 
         } else {
             System.err.println("Unknown op: " + op);
