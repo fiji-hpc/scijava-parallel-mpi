@@ -62,4 +62,14 @@ public class Measure {
             System.exit(0);
         }
     }
+
+    public static <T> T benchmark(Supplier<T> cb, int rounds) {
+        T lastResult = null;
+        for(int round = 0; round < rounds; round++) {
+            lastResult = measureCatch("total_op", cb);
+            Measure.nextRound();
+        }
+
+        return lastResult;
+    }
 }
