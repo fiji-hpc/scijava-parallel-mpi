@@ -1,9 +1,9 @@
 #!/bin/bash
 set -e
 
-OUT=/tmp/xx
 MPI_ARGS="--bind-to none --oversubscribe"
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
+OUT=$DIR/run/benchmarks
 
 source "$DIR/env.sh"
 
@@ -52,7 +52,7 @@ benchmark() (
   env | grep '^B_' | sed 's/^/export /' > "$NAME.env"
   for nodes in $(seq "$B_MAX_NODES" -1 "$B_MIN_NODES"); do
     echo "Running $nodes"
-    cmd="mpirun $MPI_ARGS -np $nodes $HOME/Fiji.app/ImageJ-linux64 --ij2 --headless --run $DIR/scripts/$SCRIPT.py input_path=\"$DIR/run/datasets/$INPUT.tif\",rounds=\"$B_ROUNDS\""
+    cmd="mpirun $MPI_ARGS -np $nodes $HOME/Fiji.app/ImageJ-linux64 --ij2 --headless --run $DIR/scripts/$SCRIPT.py input_path=\"$DIR/run/datasets/$INPUT.tif\",output_path=\"$NAME.tif\",rounds=\"$B_ROUNDS\""
     (echo $cmd; $cmd) |& tee -a "$NAME.out"
 
     if [ "$(tail -n1 "$NAME.out")" != "OK" ]; then
@@ -66,6 +66,7 @@ benchmark() (
 
 export B_MAX_NODES=4
 export B_ROUNDS=4
+
 
 benchmark minfilter default lena_gray_8
 #benchmark minfilter clij lena_gray_8
