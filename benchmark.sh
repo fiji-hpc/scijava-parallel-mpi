@@ -3,7 +3,7 @@ set -e
 
 MPI_ARGS="--bind-to none --oversubscribe"
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
-OUT=$DIR/run/benchmarks
+OUT="$DIR/run/benchmark/"
 
 source "$DIR/env.sh"
 
@@ -29,7 +29,7 @@ benchmark() (
     SCRIPT="${SCRIPT}clij"
     export B_NODES=1
   elif [ "$METHOD" = "mpisingle" ]; then
-    export B_NUM_THREADS=1
+    export B_THREADS_NUM=1
   elif [ "$METHOD" != "mpi" ]; then
     echo "Unknown method: $METHOD"
     exit 1
@@ -52,23 +52,36 @@ benchmark() (
   env | grep '^B_' | sed 's/^/export /' > "$NAME.env"
   for nodes in $(seq "$B_MAX_NODES" -1 "$B_MIN_NODES"); do
     echo "Running $nodes"
-    cmd="mpirun $MPI_ARGS -np $nodes $HOME/Fiji.app/ImageJ-linux64 --ij2 --headless --run $DIR/scripts/$SCRIPT.py input_path=\"$DIR/run/datasets/$INPUT.tif\",output_path=\"$NAME.tif\",rounds=\"$B_ROUNDS\""
+    cmd="mpirun $MPI_ARGS -np $nodes $HOME/Fiji.app/ImageJ-linux64 --ij2 --headless --run $DIR/scripts/$SCRIPT.py input_path=\"$DIR/run/datasets/$INPUT.tif\",output_path=\"$NAME.$nodes.tif\",rounds=\"$B_ROUNDS\""
+    date >> "$NAME.out"
     (echo $cmd; $cmd) |& tee -a "$NAME.out"
 
     if [ "$(tail -n1 "$NAME.out")" != "OK" ]; then
       echo FAIL
       exit 1
     fi
+    date >> "$NAME.out"
   done
   mv stats.csv "$NAME.csv"
 )
 
 
-export B_MAX_NODES=4
-export B_ROUNDS=4
+export B_MAX_NODES=8
+export B_ROUNDS=1
 
 
-benchmark minfilter default lena_gray_8
-#benchmark minfilter clij lena_gray_8
-benchmark minfilter mpi lena_gray_8
-benchmark minfilter mpisingle lena_gray_8
+benchmark minfilter default fused_tp_0_ch_0
+benchmark minfilter clij fused_tp_0_ch_0
+benchmark minfilter mpi fused_tp_0_ch_0
+benchmark minfilter mpisingle fused_tp_0_ch_0
+
+
+benchmark min default fused_tp_0_ch_0
+benchmark min mpi fused_tp_0_ch_0
+benchmark min mpisingle fused_tp_0_ch_0
+
+
+benchmark convolution default fused_tp_0_ch_0
+benchmark convolution mpi fused_tp_0_ch_0
+benchmark convolution clij fused_tp_0_ch_0
+#benchmark minfilter mpisingle fused_tp_0_ch_0
