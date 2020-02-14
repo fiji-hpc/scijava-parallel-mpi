@@ -2,6 +2,7 @@ package com.mycompany.imagej.ops.stats;
 
 
 import com.mycompany.imagej.MPIUtils;
+import com.mycompany.imagej.Utils;
 import com.mycompany.imagej.chunk.Chunk;
 import net.imagej.ops.Ops;
 import net.imagej.ops.special.function.AbstractUnaryFunctionOp;
@@ -67,7 +68,7 @@ public class MPIMinMax<I extends RealType<I>> extends AbstractUnaryFunctionOp<It
     private Pair<Double, Double> threadedMinMax(Chunk<I> chunks) {
         final List<Future< Pair<I, I> >> futures = new ArrayList<>();
 
-        for(final Chunk<I> chunk: chunks.allChunks()) {
+        for(final Chunk<I> chunk: chunks.split(Utils.numThreads()).allChunks()) {
             final Callable<Pair<I, I>> call = new Callable<Pair<I, I>>() {
                 @Override
                 public Pair<I, I> call() throws Exception {

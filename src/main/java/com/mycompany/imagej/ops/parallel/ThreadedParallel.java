@@ -6,6 +6,7 @@ import net.imglib2.IterableInterval;
 import org.scijava.plugin.Parameter;
 import org.scijava.plugin.Plugin;
 import org.scijava.thread.ThreadService;
+import com.mycompany.imagej.Utils;
 
 import java.util.ArrayList;
 import java.util.concurrent.ExecutionException;
@@ -22,10 +23,7 @@ public class ThreadedParallel<O> extends AbstractNullaryComputerOp<IterableInter
 
     @Override
     public void compute(IterableInterval<O> block) {
-        int threads = Runtime.getRuntime().availableProcessors();
-        if(System.getenv("B_THREADS_NUM") != null) {
-            threads = Integer.parseInt(System.getenv("B_THREADS_NUM"));
-        }
+        int threads = Utils.numThreads();
 
         Chunk<O> chunks = new Chunk<>(block, threads);
         ArrayList<Future<?>> futures = new ArrayList<>(threads);

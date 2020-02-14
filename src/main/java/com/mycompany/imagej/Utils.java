@@ -11,4 +11,12 @@ public class Utils {
             System.out.println(s.toString());
         }
     }
+
+    public static int numThreads() {
+        if(System.getenv("B_THREADS_NUM") != null) {
+            return Integer.parseInt(System.getenv("B_THREADS_NUM"));
+        }
+
+        return Runtime.getRuntime().availableProcessors();
+    }
 }
