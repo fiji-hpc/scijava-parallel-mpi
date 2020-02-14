@@ -14,6 +14,8 @@ public class MPIDatasetIOService extends DefaultDatasetIOService {
     @Override
     public Metadata save(Dataset dataset, String destination, SCIFIOConfig config) throws IOException {
         if(MPIUtils.isRoot()) {
+            config.writerSetSequential(true);
+            config.writerSetCompression("Uncompressed");
             return super.save(dataset, destination, config);
         }
         return null;
