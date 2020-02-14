@@ -7,6 +7,7 @@
 
 from net.imglib2.algorithm.neighborhood import RectangleShape
 from com.mycompany.imagej import Measure
+from com.mycompany.imagej import MPIUtils
 
 def fn():
 	output = ops.create().img(input)

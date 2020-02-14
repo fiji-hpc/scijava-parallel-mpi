@@ -4,6 +4,7 @@
 #@ String output_path
 #@ UIService ui
 #@ int rounds
+#@ DatasetService datasetService
 
 from com.mycompany.imagej import Measure
 
@@ -15,6 +16,5 @@ def fn():
 
 input = scifio.datasetIO().open(input_path)
 output = Measure.benchmark(fn, rounds)
-scifio.datasetIO().save(output, output_path)
+scifio.datasetIO().save(datasetService.create(output), output_path)
 print("OK")
-
