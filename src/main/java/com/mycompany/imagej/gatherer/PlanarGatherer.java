@@ -33,9 +33,15 @@ public class PlanarGatherer<O> extends AbstractGatherer<O> {
             List<NonBlockingBroadcast.Block> transferBlocks = new ArrayList<>();
 
             long sent = 0;
+            long blockSent = 0;
             long totalLen = chunk.getLen() / type.getEntitiesPerPixel().getDenominator();
             while(sent < totalLen) {
                 int length = (int) Math.min(totalLen - sent, c.getArrayLength() - planeOffset);
+                if(blockSent + length >= Integer.MAX_VALUE) {
+                    blockSent = 0;
+                    transfer.requestTransfer(currentRoot, transferBlocks);
+                    transferBlocks = new ArrayList<>();
+                }
                 transferBlocks.add(new NonBlockingBroadcast.Block(c.getCurrentStorageArray(), planeOffset, length));
 
                 planeOffset += length;
@@ -50,9 +56,13 @@ public class PlanarGatherer<O> extends AbstractGatherer<O> {
                 }
 
                 sent += length;
+                blockSent += length;
             }
 
-            transfer.requestTransfer(currentRoot++, transferBlocks);
+            if(!transferBlocks.isEmpty()) {
+                transfer.requestTransfer(currentRoot, transferBlocks);
+            }
+            currentRoot++;
         }
 
         transfer.waitForTransfer();
