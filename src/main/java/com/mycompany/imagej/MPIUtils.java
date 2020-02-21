@@ -1,7 +1,10 @@
 package com.mycompany.imagej;
 
+import com.mycompany.imagej.mpi.ReduceOp;
 import com.sun.jna.*;
 import com.sun.jna.ptr.PointerByReference;
+import net.imglib2.type.numeric.integer.GenericByteType;
+import net.imglib2.type.numeric.integer.UnsignedByteType;
 
 import java.lang.reflect.Field;
 
@@ -14,6 +17,7 @@ public class MPIUtils {
     public static Pointer MPI_DOUBLE;
     public static Pointer MPI_OP_MIN;
     public static Pointer MPI_OP_MAX;
+    public static Pointer MPI_OP_SUM;
 
     public static Pointer MPI_COMM_WORLD;
 
@@ -85,6 +89,57 @@ public class MPIUtils {
         checkMpiResult(MPILibrary.INSTANCE.MPI_Recv(buf, count, datatype, dest, tag, comm, status));
     }
 
+    public static Pointer toOP(ReduceOp op) {
+        switch(op) {
+            case SUM:
+                return MPI_OP_SUM;
+            case MIN:
+                return MPI_OP_MIN;
+            case MAX:
+                return MPI_OP_MAX;
+        }
+        throw new RuntimeException("unsupported");
+    }
+
+    public static Object Allreduce(Object send, ReduceOp op) {
+        Pointer mpiType = MPIType.toMPI(send);
+        Memory local = new Memory(MPIType.size(mpiType));
+        Memory global = new Memory(MPIType.size(mpiType));
+
+        if(mpiType == MPI_BYTE) {
+            if(send instanceof GenericByteType) {
+                local.setByte(0, ((GenericByteType) send).getByte());
+            } else {
+                local.setByte(0, (byte) send);
+            }
+        } else if(mpiType == MPI_DOUBLE) {
+            local.setDouble(0, (double) send);
+        } else {
+            throw new RuntimeException("Unsupported");
+        }
+
+        int ret = MPILibrary.INSTANCE.MPI_Allreduce(
+                local,
+                global,
+                1,
+                mpiType,
+                toOP(op),
+                MPIUtils.MPI_COMM_WORLD
+        );
+        checkMpiResult(ret);
+
+        if(mpiType == MPI_BYTE) {
+            if(send instanceof GenericByteType) {
+                return new UnsignedByteType(global.getByte(0));
+            } else {
+                return global.getByte(0);
+            }
+        } else if(mpiType == MPI_DOUBLE) {
+            return global.getDouble(0);
+        }
+        throw new RuntimeException("Unsupported");
+    }
+
     public static void Allreduce(double[] sendbuf, double[] recvbuf, int count, Pointer datatype, Pointer op, Pointer comm) {
         checkMpiResult(MPILibrary.INSTANCE.MPI_Allreduce(sendbuf, recvbuf, count, datatype, op, comm));
     }
@@ -110,6 +165,7 @@ public class MPIUtils {
         int MPI_Type_commit(PointerByReference type);
         int MPI_Get_processor_name(byte[] name, int []resultlen);
         int MPI_Allreduce(double[] sendbuf, double[] recvbuf, int count, Pointer datatype, Pointer op, Pointer comm);
+        int MPI_Allreduce(Memory sendbuf, Memory recvbuf, int count, Pointer datatype, Pointer op, Pointer comm);
         int MPI_Send(long buf, int count, Pointer datatype, int dest, int tag, Pointer comm);
         int MPI_Recv(long buf, int count, Pointer datatype, int dest, int tag, Pointer comm, Pointer status);
         int MPI_Ibcast(Memory buffer, int count, Pointer datatype, int root, Pointer comm, PointerByReference request);
