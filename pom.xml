@@ -70,11 +70,5 @@
             <version>RELEASE</version>
             <scope>test</scope>
         </dependency>
-
-        <dependency>
-            <groupId>net.haesleinhuepf</groupId>
-            <artifactId>clij-ops</artifactId>
-            <version>1.4.4</version>
-        </dependency>
     </dependencies>
 </project>
