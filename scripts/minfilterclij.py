@@ -6,7 +6,7 @@
 #@ int rounds
 #@ DatasetService datasetService
 
-from com.mycompany.imagej import Measure
+from cz.it4i.scijava.mpi import Measure
 
 def fn():
     outputGPU = ops.run("CLIJ_create", input)

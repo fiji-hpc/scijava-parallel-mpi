@@ -66,7 +66,7 @@ benchrun() {
 			mkdir -p "$output_dir"
 
 			P="-agentpath:$HOME/profiler/libasyncProfiler.so=start,alluser,file=$output_dir/profile.%p.svg,interval=1ms"
-			cmd="mpirun --bind-to none --oversubscribe -np $nodes java $P com.mycompany.imagej.Main $op  $DIR/run/datasets/$dataset $nodes/result.tiff"
+			cmd="mpirun --bind-to none --oversubscribe -np $nodes java $P cz.it4i.scijava.mpi.Main $op  $DIR/run/datasets/$dataset $nodes/result.tiff"
       echo -e "\n## $nodes nodes" >> out
       for round in $(seq 1 $B_ROUNDS); do
         (

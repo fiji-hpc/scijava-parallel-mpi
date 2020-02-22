@@ -11,8 +11,8 @@
         <relativePath />
     </parent>
 
-    <groupId>groupId</groupId>
-    <artifactId>imagej-openmpi</artifactId>
+    <groupId>cz.it4i</groupId>
+    <artifactId>scijava-parallel-mpi</artifactId>
     <version>1.0-SNAPSHOT</version>
 
     <repositories>

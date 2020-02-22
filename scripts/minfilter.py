@@ -6,8 +6,8 @@
 #@ int rounds
 
 from net.imglib2.algorithm.neighborhood import RectangleShape
-from com.mycompany.imagej import Measure
-from com.mycompany.imagej import MPIUtils
+from cz.it4i.scijava.mpi import Measure
+from cz.it4i.scijava.mpi import MPIUtils
 
 def fn():
 	output = ops.create().img(input)

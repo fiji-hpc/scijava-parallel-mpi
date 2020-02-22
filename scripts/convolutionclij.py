@@ -20,5 +20,7 @@ inputGPU = ops.run("CLIJ_push", input)
 ops.run("filter.convolve", inputGPU, kernelGPU, outputGPU)
 output = ops.run("CLIJ_pull", outputGPU)
 
+scifio.datasetIO().save(output, output_path)
 
-ui.show(output)
+#ui.show(output)
+print("OK")

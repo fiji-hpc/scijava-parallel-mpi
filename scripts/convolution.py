@@ -5,7 +5,7 @@
 #@ UIService ui
 #@ int rounds
 
-from com.mycompany.imagej import Measure
+from cz.it4i.scijava.mpi import Measure
 from net.imglib2.type.numeric.real import FloatType
 from net.imglib2.view import Views
 

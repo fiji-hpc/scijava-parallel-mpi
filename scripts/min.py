@@ -5,7 +5,7 @@
 #@ UIService ui
 #@ int rounds
 
-from com.mycompany.imagej import Measure
+from cz.it4i.scijava.mpi import Measure
 
 def fn():
 	return ops.stats().minMax(input)
