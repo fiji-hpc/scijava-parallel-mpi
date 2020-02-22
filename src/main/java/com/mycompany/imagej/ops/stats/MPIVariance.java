@@ -11,12 +11,13 @@ import net.imagej.ops.stats.AbstractStatsOp;
 import net.imglib2.IterableInterval;
 import net.imglib2.type.numeric.RealType;
 import net.imglib2.util.Intervals;
+import org.scijava.Priority;
 import org.scijava.plugin.Attr;
 import org.scijava.plugin.Plugin;
 
 import java.util.function.Function;
 
-@Plugin(type = Ops.Stats.Variance.class, label = "Statistics: Variance", attrs = {@Attr(name = "MPI", value="true")})
+@Plugin(type = Ops.Stats.Variance.class, label = "Statistics: Variance", priority = Priority.VERY_HIGH + 1, attrs = {@Attr(name = "MPI", value="true")})
 public class MPIVariance<I extends RealType<I>, O extends RealType<O>>
 	extends AbstractStatsOp<IterableInterval<I>, O> implements Ops.Stats.Variance
 {

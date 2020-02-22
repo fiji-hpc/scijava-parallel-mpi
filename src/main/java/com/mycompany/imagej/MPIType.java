@@ -18,7 +18,7 @@ public class MPIType {
             return MPIUtils.MPI_UNSIGNED;
         } else if(o instanceof GenericLongType) {
             return MPIUtils.MPI_UNSIGNED_LONG;
-        } else if(o instanceof DoubleType) {
+        } else if(o instanceof DoubleType || o instanceof Double) {
             return MPIUtils.MPI_DOUBLE;
         } else if(o instanceof FloatType) {
             return MPIUtils.MPI_FLOAT;

@@ -12,9 +12,9 @@ import org.scijava.plugin.Plugin;
 
 import java.util.function.Function;
 
-@Plugin(type = Ops.Stats.Sum.class, label = "Statistics: Sum Of Inverses", priority = 1, attrs = {@Attr(name = "MPI", value="true")})
+@Plugin(type = Ops.Stats.SumOfInverses.class, label = "Statistics: Sum Of Inverses", priority = 1, attrs = {@Attr(name = "MPI", value="true")})
 public class MPISumOfInverses<I extends RealType<I>, O extends RealType<O>> extends
-        AbstractStatsOp<IterableInterval<I>, O> implements Ops.Stats.Sum
+        AbstractStatsOp<IterableInterval<I>, O> implements Ops.Stats.SumOfInverses
 {
     @Override
     public void compute(IterableInterval<I> input, O output) {

@@ -14,9 +14,9 @@ import org.scijava.plugin.Plugin;
 import java.util.function.Function;
 
 
-@Plugin(type = Ops.Stats.Moment1AboutMean.class, label = "Statistics: Moment1AboutMean", attrs = {@Attr(name = "MPI", value="true")})
+@Plugin(type = Ops.Stats.Moment2AboutMean.class, label = "Statistics: Moment1AboutMean", priority = 1, attrs = {@Attr(name = "MPI", value="true")})
 public class MPIMoment2AboutMean<I extends RealType<I>, O extends RealType<O>>
-        extends AbstractStatsOp<Iterable<I>, O> implements Ops.Stats.Moment1AboutMean
+        extends AbstractStatsOp<Iterable<I>, O> implements Ops.Stats.Moment2AboutMean
 {
 
     private UnaryFunctionOp<Iterable<I>, O> meanFunc;
