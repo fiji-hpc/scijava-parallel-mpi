@@ -8,3 +8,5 @@
 int world_size();
 int world_rank();
 uint64_t numElements(int64_t *dims, int n_dims);
+void bench_start();
+void bench_stop(const char *desc);

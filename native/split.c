@@ -37,6 +37,7 @@ void split_myblock_pos(struct split *split, uint64_t *begin, uint64_t *end) {
 void split_sync(struct split *split) {
     int rank = world_rank();
     int myOffset = split->displs[rank];
+    bench_start();
     MPI_CHECK(MPI_Allgatherv(
         split->begin + myOffset,
         split->recvcounts[rank],
@@ -47,6 +48,7 @@ void split_sync(struct split *split) {
         MPI_BYTE,
         MPI_COMM_WORLD
     ));
+    bench_stop("MPI_Allgatherv");
 }
 
 void split_free(struct split *split) {
