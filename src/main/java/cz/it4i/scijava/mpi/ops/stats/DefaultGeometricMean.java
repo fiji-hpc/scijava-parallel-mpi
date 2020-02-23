@@ -54,9 +54,9 @@ public class DefaultGeometricMean<I extends RealType<I>, O extends RealType<O>>
 	extends AbstractStatsOp<IterableInterval<I>, O> implements Ops.Stats.GeometricMean
 {
 
-	private UnaryFunctionOp<Iterable<I>, O> sizeFunc;
+	private UnaryFunctionOp<IterableInterval<I>, O> sizeFunc;
 
-	private UnaryFunctionOp<Iterable<I>, O> sumOfLogsFunc;
+	private UnaryFunctionOp<IterableInterval<I>, O> sumOfLogsFunc;
 
 	@Override
 	public void initialize() {

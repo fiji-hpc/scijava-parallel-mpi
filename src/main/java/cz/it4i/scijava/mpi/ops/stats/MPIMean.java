@@ -15,7 +15,7 @@ import org.scijava.plugin.Plugin;
 public class MPIMean<I extends RealType<I>, O extends RealType<O>> extends
         AbstractStatsOp<IterableInterval<I>, O> implements Ops.Stats.Mean
 {
-    private UnaryFunctionOp<Iterable<I>, O> sumFunc;
+    private UnaryFunctionOp<IterableInterval<I>, O> sumFunc;
 
     @Override
     public void initialize() {

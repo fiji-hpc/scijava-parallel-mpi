@@ -34,6 +34,7 @@ import net.imagej.ops.Ops;
 import net.imagej.ops.special.chain.RTs;
 import net.imagej.ops.special.function.UnaryFunctionOp;
 import net.imagej.ops.stats.AbstractStatsOp;
+import net.imglib2.IterableInterval;
 import net.imglib2.type.numeric.RealType;
 import org.scijava.Priority;
 import org.scijava.plugin.Attr;
@@ -50,12 +51,12 @@ import org.scijava.plugin.Plugin;
  */
 @Plugin(type = Ops.Stats.HarmonicMean.class, label = "Statistics: Harmonic Mean", priority = Priority.VERY_HIGH + 1, attrs = {@Attr(name = "MPI", value="true")})
 public class DefaultHarmonicMean<I extends RealType<I>, O extends RealType<O>>
-	extends AbstractStatsOp<Iterable<I>, O> implements Ops.Stats.HarmonicMean
+	extends AbstractStatsOp<IterableInterval<I>, O> implements Ops.Stats.HarmonicMean
 {
 
-	private UnaryFunctionOp<Iterable<I>, O> sizeFunc;
+	private UnaryFunctionOp<IterableInterval<I>, O> sizeFunc;
 
-	private UnaryFunctionOp<Iterable<I>, O> sumOfInversesFunc;
+	private UnaryFunctionOp<IterableInterval<I>, O> sumOfInversesFunc;
 
 	@Override
 	public void initialize() {
@@ -64,7 +65,7 @@ public class DefaultHarmonicMean<I extends RealType<I>, O extends RealType<O>>
 	}
 
 	@Override
-	public void compute(final Iterable<I> input, final O output) {
+	public void compute(final IterableInterval<I> input, final O output) {
 		final double area = sizeFunc.calculate(input).getRealDouble();
 		final double sumOfInverses = sumOfInversesFunc.calculate(input).getRealDouble();
 

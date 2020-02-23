@@ -22,7 +22,7 @@ public class MPIVariance<I extends RealType<I>, O extends RealType<O>>
 	extends AbstractStatsOp<IterableInterval<I>, O> implements Ops.Stats.Variance
 {
 
-	private UnaryFunctionOp<Iterable<I>, O> meanOp;
+	private UnaryFunctionOp<IterableInterval<I>, O> meanOp;
 
 	@Override
 	public void initialize() {
