@@ -3,6 +3,7 @@ package cz.it4i.scijava.mpi;
 import cz.it4i.scijava.mpi.mpi.ReduceOp;
 import com.sun.jna.*;
 import com.sun.jna.ptr.PointerByReference;
+import com.sun.jna.Native;
 import net.imglib2.type.numeric.integer.GenericByteType;
 import net.imglib2.type.numeric.integer.UnsignedByteType;
 
