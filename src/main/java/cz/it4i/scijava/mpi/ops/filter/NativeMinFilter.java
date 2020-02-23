@@ -17,6 +17,8 @@ import org.scijava.Priority;
 import org.scijava.plugin.Parameter;
 import org.scijava.plugin.Plugin;
 
+import static cz.it4i.scijava.mpi.Measure.measureCatch;
+
 @Plugin(type = Ops.Filter.Min.class, priority = Priority.EXTREMELY_HIGH)
 public class NativeMinFilter<I, O> extends
         AbstractUnaryComputerOp<DefaultDataset, IterableInterval<O>>
@@ -32,12 +34,24 @@ public class NativeMinFilter<I, O> extends
     @Override
     public void compute(DefaultDataset input, IterableInterval<O> output) {
         long elements = Intervals.numElements(input);
-        Memory outputMem = new Memory(elements);
-        Memory inputMem = new Memory(elements);
+        Memory outputMem = measureCatch("alloc_outputmem", () -> new Memory(elements));
+        Memory inputMem = measureCatch("alloc_inputmem", () -> new Memory(elements));
+        measureCatch("copyToNative", () -> {
+            Native.copyToNative((PlanarImg) input.getImgPlus().getImg(), inputMem);
+        });
+        measureCatch("native_minfilter", () -> {
+            Native.NativeLib.INSTANCE.minfilter(outputMem, inputMem, Intervals.dimensionsAsLongArray(input), input.numDimensions(), shape.getSpan());
+        });
+        measureCatch("copyToNative", () -> {
+            Native.copyFromNative(castToPlanar(output), outputMem);
+        });
+    }
 
-        Native.copyToNative((PlanarImg) input.getImgPlus().getImg(), inputMem);
-        Native.NativeLib.INSTANCE.minfilter(outputMem, inputMem, Intervals.dimensionsAsLongArray(input), input.numDimensions(), shape.getSpan());
-        Native.copyFromNative((PlanarImg) output, outputMem);
+    private PlanarImg castToPlanar(IterableInterval output) {
+        if(output instanceof DefaultDataset) {
+            return (PlanarImg) ((DefaultDataset) output).getImgPlus().getImg();
+        }
+        return (PlanarImg) output;
     }
 
     @Override
