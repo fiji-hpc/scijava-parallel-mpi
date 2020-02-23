@@ -26,7 +26,7 @@ public class GenTiff {
             name.append(arg);
             dims[i++] = Integer.parseInt(arg);
         }
-        name.append(".tiff");
+        name.append(".tif");
 
         PlanarImg<UnsignedByteType, ByteArray> img = (PlanarImg<UnsignedByteType, ByteArray>) new PlanarImgFactory<>(new UnsignedByteType()).create(dims);
         InputStream rand = new FileInputStream("/dev/urandom");
