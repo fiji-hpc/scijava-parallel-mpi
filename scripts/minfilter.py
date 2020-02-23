@@ -11,7 +11,7 @@ from cz.it4i.scijava.mpi import MPIUtils
 
 def fn():
 	output = ops.create().img(input)
-	ops.filter().max(output, input, RectangleShape(3, False))
+	ops.filter().min(output, input, RectangleShape(3, False))
 	return output
 
 input = scifio.datasetIO().open(input_path)
