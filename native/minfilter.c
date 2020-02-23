@@ -7,9 +7,10 @@ void minfilter(uint8_t *output, uint8_t *input, int64_t *dims, int n_dims, int n
     struct split split;
     split_init(&split, output, numElements(dims, n_dims));
 
-    uint64_t cur, end;
-    split_myblock_pos(&split, &cur, &end);
-    for(; cur < end; cur++) {
+    uint64_t begin, end;
+    split_myblock_pos(&split, &begin, &end);
+    #pragma omp parallel for
+    for(uint64_t cur = begin; cur < end; cur++) {
       int64_t Z = cur / (dims[0] * dims[1]);
       int64_t Y = (cur % (dims[0] * dims[1])) / dims[0];
       int64_t X = (cur % (dims[0] * dims[1])) % dims[0];
