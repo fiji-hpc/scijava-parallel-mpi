@@ -10,3 +10,5 @@ int world_rank();
 uint64_t numElements(int64_t *dims, int n_dims);
 void bench_start();
 void bench_stop(const char *desc);
+void index_to_pos(uint64_t index, int64_t *position, int64_t *dims, int n);
+void fwd(int64_t *position, int64_t *dims, int n_dims);

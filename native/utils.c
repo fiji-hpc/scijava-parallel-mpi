@@ -22,6 +22,26 @@ uint64_t numElements(int64_t *dims, int n_dims) {
     return total;
 }
 
+void index_to_pos(uint64_t index, int64_t *position, int64_t *dims, int n) {
+  for(int d = 0; d < n - 1; d++) {
+    uint64_t pos = index / dims[d];
+    position[d] = index - pos * dims[d];
+    index = pos;
+  }
+  position[n - 1] = index;
+}
+
+void fwd(int64_t *position, int64_t *dims, int n_dims) {
+  for(int d = 0; d < n_dims; d++) {
+    position[d]++;
+    if(position[d] >= dims[d]) {
+      position[d] = 0;
+    } else {
+      break;
+    }
+  }
+}
+
 static struct timespec start;
 void bench_start() {
     clock_gettime(CLOCK_MONOTONIC, &start);
