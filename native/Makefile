@@ -1,4 +1,4 @@
-CFLAGS=-fPIC -Wall -O2 -fopenmp
+CFLAGS=-fPIC -Wall -fopenmp -g -O3 -march=native
 CC=mpicc
 
 all: libscijava_parallel_mpi_native.so
