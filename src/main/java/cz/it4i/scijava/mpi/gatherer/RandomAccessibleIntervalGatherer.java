@@ -16,6 +16,7 @@ public class RandomAccessibleIntervalGatherer {
       boolean gathered = false;
       for (Gatherer<O> gatherer : gatherers) {
          if (gatherer.gather(chunks)) {
+            System.out.println("Gathered with: " + gatherer.getClass().getName());
             gathered = true;
             break;
          }
