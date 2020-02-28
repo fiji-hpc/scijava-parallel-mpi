@@ -1,6 +1,7 @@
 package cz.it4i.scijava.mpi;
 
 import java.io.FileOutputStream;
+import java.util.Date;
 
 public class Measure {
     public interface Runnable {
@@ -65,11 +66,15 @@ public class Measure {
 
     public static <T> T benchmark(Supplier<T> cb, int rounds) {
         for(int round = 0; round < rounds; round++) {
+            MPIUtils.MPILibrary.INSTANCE.MPI_Barrier(MPIUtils.MPI_COMM_WORLD);
+            Utils.print("Round " + round + " started at " + new Date());
             if(round + 1 == rounds) {
               return measureCatch("total_op", cb);
             }
 
             measureCatch("total_op", cb);
+
+            Utils.print("Round " + round + " finished at " + new Date());
             Measure.nextRound();
             System.gc();
         }
