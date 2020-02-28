@@ -1,15 +1,17 @@
 package cz.it4i.scijava.mpi.ops.parallel;
 
+import cz.it4i.scijava.mpi.Utils;
 import cz.it4i.scijava.mpi.chunk.Chunk;
 import net.imagej.ops.special.computer.AbstractNullaryComputerOp;
 import net.imglib2.IterableInterval;
 import org.scijava.plugin.Parameter;
 import org.scijava.plugin.Plugin;
-import org.scijava.thread.ThreadService;
-import cz.it4i.scijava.mpi.Utils;
 
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.function.Consumer;
 
@@ -18,31 +20,28 @@ public class ThreadedParallel<O> extends AbstractNullaryComputerOp<IterableInter
     @Parameter
     private Consumer<Chunk<O>> action;
 
-    @Parameter
-    protected ThreadService threadService;
-
     @Override
     public void compute(IterableInterval<O> block) {
-        int threads = Utils.numThreads();
+        ExecutorService executor = Executors.newFixedThreadPool(Utils.numThreads());
 
-        Chunk<O> chunks = new Chunk<>(block, threads);
-        ArrayList<Future<?>> futures = new ArrayList<>(threads);
+        int jobs = 2 * Utils.numThreads();
+        Chunk<O> chunks = new Chunk<>(block, jobs);
+        ArrayList<Future<?>> futures = new ArrayList<>(jobs);
 
-        for(int i = 0; i < threads; i++) {
+        for(int i = 0; i < jobs; i++) {
             final int threadNum = i;
-            futures.add(this.threadService.run(new Runnable() {
-                public void run() {
-                    action.accept(chunks.getChunk(threadNum));
-                }
-            }));
+            futures.add(executor.submit(() -> action.accept(chunks.getChunk(threadNum))));
         }
 
         for(Future<?> future: futures) {
             try {
                 future.get();
+                Utils.print("Job finished at " + new Date());
             } catch (InterruptedException | ExecutionException e) {
                 e.printStackTrace();
             }
         }
+
+        executor.shutdown();
     }
 }
