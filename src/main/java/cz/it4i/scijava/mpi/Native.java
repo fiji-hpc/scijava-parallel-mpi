@@ -55,5 +55,6 @@ public class Native {
         void minfilter(Memory output, Memory input, long[] dims, int n_dims, int neighSize);
         void mpirank(Memory output, Memory input, long[] dims, int n_dims);
         void convolve(Memory output, Memory input, long[] dims, int n_dims, Memory kernel, long[] kernel_dims, int n_kernel);
+        void add(Memory output, Memory input, long elements, byte scalar);
     }
 }
