@@ -21,8 +21,8 @@ public final class ConstantToIIOutputII {
         public void compute(final IterableInterval<T> input,
                             final IterableInterval<T> output)
         {
-            this.ops().run(Parallel.class, input, (Consumer<Chunk<T>>) chunk -> {
-                super.compute(chunk, new Chunk<>(output, chunk.getOffset(), chunk.getLen()));
+            this.ops().run(Parallel.class, output, (Consumer<Chunk<T>>) chunk -> {
+                super.compute(new Chunk<>(input, chunk.getOffset(), chunk.getLen()), chunk);
             });
         }
 
@@ -41,8 +41,8 @@ public final class ConstantToIIOutputII {
         public void compute(final IterableInterval<T> input,
                             final IterableInterval<T> output)
         {
-            this.ops().run(Parallel.class, input, (Consumer<Chunk<T>>) chunk -> {
-                super.compute(chunk, new Chunk<>(output, chunk.getOffset(), chunk.getLen()));
+            this.ops().run(Parallel.class, output, (Consumer<Chunk<T>>) chunk -> {
+                super.compute(new Chunk<>(input, chunk.getOffset(), chunk.getLen()), chunk);
             });
         }
 
@@ -61,8 +61,8 @@ public final class ConstantToIIOutputII {
         public void compute(final IterableInterval<T> input,
                             final IterableInterval<T> output)
         {
-            this.ops().run(Parallel.class, input, (Consumer<Chunk<T>>) chunk -> {
-                super.compute(chunk, new Chunk<>(output, chunk.getOffset(), chunk.getLen()));
+            this.ops().run(Parallel.class, output, (Consumer<Chunk<T>>) chunk -> {
+                super.compute(new Chunk<>(input, chunk.getOffset(), chunk.getLen()), chunk);
             });
         }
 
@@ -81,8 +81,8 @@ public final class ConstantToIIOutputII {
         public void compute(final IterableInterval<T> input,
                             final IterableInterval<T> output)
         {
-            this.ops().run(Parallel.class, input, (Consumer<Chunk<T>>) chunk -> {
-                super.compute(chunk, new Chunk<>(output, chunk.getOffset(), chunk.getLen()));
+            this.ops().run(Parallel.class, output, (Consumer<Chunk<T>>) chunk -> {
+                super.compute(new Chunk<>(input, chunk.getOffset(), chunk.getLen()), chunk);
             });
         }
 
