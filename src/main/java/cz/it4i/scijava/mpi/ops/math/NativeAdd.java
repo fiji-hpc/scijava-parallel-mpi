@@ -43,7 +43,7 @@ public class NativeAdd<T extends NumericType<T>> extends
         measureCatch("native_minfilter", () -> {
             Native.NativeLib.INSTANCE.add(outputMem, inputMem, Intervals.numElements(elements), value.getByte());
         });
-        measureCatch("copyToNative", () -> {
+        measureCatch("copyFromNative", () -> {
             Native.copyFromNative(castToPlanar(output), outputMem);
         });
     }
