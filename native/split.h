@@ -4,8 +4,11 @@ struct split {
     uint8_t* begin;
     uint64_t elements;
 
-    int *recvcounts;
-    int *displs;
+    uint32_t type_multiplier;
+
+    uint64_t per_node;
+    uint64_t *node_offsets;
+    uint64_t *node_sizes;
 };
 
 void split_init(struct split *split, uint8_t *output, uint64_t elements);

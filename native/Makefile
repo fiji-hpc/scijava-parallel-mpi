@@ -1,4 +1,4 @@
-CFLAGS=-fPIC -Wall -fopenmp -g -O3 -march=native
+CFLAGS=-fPIC -Wall -fopenmp -g -O3 -march=native -mtune=native
 CC=mpicc
 
 all: libscijava_parallel_mpi_native.so
