@@ -1,5 +1,6 @@
 package cz.it4i.scijava.mpi.ops.parallel;
 
+import cz.it4i.scijava.mpi.Utils;
 import cz.it4i.scijava.mpi.chunk.Chunk;
 import cz.it4i.scijava.mpi.mpi.ReduceOp;
 import net.imagej.ops.special.function.AbstractUnaryFunctionOp;
@@ -30,7 +31,7 @@ public class ThreadedReduce<O extends RealType<O>, R> extends AbstractUnaryFunct
     @Override
     public R calculate(IterableInterval<O> input) {
         final List<Future<R>> futures = new ArrayList<>();
-        for(Chunk<O> chunk: new Chunk<>(input).split(Runtime.getRuntime().availableProcessors()).allChunks()) {
+        for(Chunk<O> chunk: new Chunk<>(input).split(Utils.numThreads()).allChunks()) {
             futures.add(
                      threadService.getExecutorService().submit(() -> action.apply(chunk))
             );
