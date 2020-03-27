@@ -1,0 +1,14 @@
+read,0,1,0,736
+net.imagej.ops.Ops.Create.Img,0,1,0,172
+net.imagej.ops.Ops.Create.ImgFactory,0,1,0,1
+net.imagej.ops.Ops.Math.Add,0,1,0,1849
+total_op,0,1,0,2061
+net.imagej.ops.Ops.Create.Img,0,1,1,34
+net.imagej.ops.Ops.Create.ImgFactory,0,1,1,1
+net.imagej.ops.Ops.Math.Add,0,1,1,1851
+total_op,0,1,1,1898
+net.imagej.ops.Ops.Create.Img,0,1,2,31
+net.imagej.ops.Ops.Create.ImgFactory,0,1,2,1
+net.imagej.ops.Ops.Math.Add,0,1,2,2008
+total_op,0,1,2,2051
+write,0,1,2,935

@@ -1,0 +1,6 @@
+read,0,1,0,2913
+net.imagej.ops.Ops.Create.Img,0,1,0,213
+net.imagej.ops.thread.chunker.ChunkerOp,0,1,0,109242
+net.imagej.ops.Ops.Filter.Min,0,1,0,109278
+total_op,0,1,0,109524
+write,0,1,0,1905

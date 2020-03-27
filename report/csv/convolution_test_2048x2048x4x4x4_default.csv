@@ -1,0 +1,13 @@
+net.imagej.ops.Ops.Create.ImgFactory,0,1,0,133
+create.img,0,1,0,952
+read,0,1,0,4277
+net.imagej.ops.Ops.Create.Img,0,1,0,40
+net.imagej.ops.Ops.Filter.Convolve,0,1,0,96605
+total_op,0,1,0,96662
+net.imagej.ops.Ops.Create.Img,0,1,1,42
+net.imagej.ops.Ops.Filter.Convolve,0,1,1,88082
+total_op,0,1,1,88137
+net.imagej.ops.Ops.Create.Img,0,1,2,41
+net.imagej.ops.Ops.Filter.Convolve,0,1,2,87413
+total_op,0,1,2,87465
+write,0,1,2,1331

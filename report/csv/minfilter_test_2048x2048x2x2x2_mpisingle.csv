@@ -1,0 +1,14 @@
+read,0,4,0,512
+read,3,4,0,516
+read,2,4,0,523
+read,1,4,0,529
+net.imagej.ops.Ops.Create.Img,1,4,0,143
+net.imagej.ops.Ops.Create.Img,0,4,0,145
+net.imagej.ops.Ops.Create.Img,2,4,0,147
+net.imagej.ops.Ops.Create.Img,3,4,0,146
+read,0,2,0,531
+read,1,2,0,557
+net.imagej.ops.Ops.Create.Img,1,2,0,140
+net.imagej.ops.Ops.Create.Img,0,2,0,148
+read,0,1,0,503
+net.imagej.ops.Ops.Create.Img,0,1,0,149

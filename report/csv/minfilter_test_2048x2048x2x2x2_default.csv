@@ -1,0 +1,14 @@
+read,0,1,0,809
+net.imagej.ops.Ops.Create.Img,0,1,0,148
+net.imagej.ops.thread.chunker.ChunkerOp,0,1,0,374212
+net.imagej.ops.Ops.Filter.Min,0,1,0,374262
+total_op,0,1,0,374442
+net.imagej.ops.Ops.Create.Img,0,1,1,6
+net.imagej.ops.thread.chunker.ChunkerOp,0,1,1,365317
+net.imagej.ops.Ops.Filter.Min,0,1,1,365334
+total_op,0,1,1,365352
+net.imagej.ops.Ops.Create.Img,0,1,2,6
+net.imagej.ops.thread.chunker.ChunkerOp,0,1,2,366352
+net.imagej.ops.Ops.Filter.Min,0,1,2,366367
+total_op,0,1,2,366383
+write,0,1,2,167
