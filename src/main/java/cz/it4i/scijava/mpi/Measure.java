@@ -29,10 +29,13 @@ public class Measure {
             round = Integer.parseInt(System.getenv("B_CURRENT_ROUND"));
         }
 
-        try(FileOutputStream out = new FileOutputStream("stats.csv", true)) {
-  //          FileLock lock = out.getChannel().lock();
-            out.write((desc + "," + MPIUtils.getRank() + "," + MPIUtils.getSize() + "," + round + "," + time_ms + "\n").getBytes());
-//            lock.release();
+        String csvPath = System.getenv("B_STATS_PATH");
+        if(csvPath != null) {
+            try (FileOutputStream out = new FileOutputStream(csvPath, true)) {
+                //          FileLock lock = out.getChannel().lock();
+                out.write((desc + "," + MPIUtils.getRank() + "," + MPIUtils.getSize() + "," + round + "," + time_ms + "\n").getBytes());
+                //            lock.release();
+            }
         }
 
         return ret;
