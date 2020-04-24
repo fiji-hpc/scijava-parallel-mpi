@@ -175,7 +175,9 @@ class All:
                         op=op,
                         method=method,
                         dataset=dataset,
-                        rank_size=rank
+                        rank_size=rank,
+                        suffix=suffix,
+                        env=env,
                     ))
 
     def benchmark_remaining(self, nodes, dry_run=False, fail_on_error=False, single=False):
@@ -184,17 +186,23 @@ class All:
                 b.benchmark_remaining(dry_run, fail_on_error, single)
 
     def status(self):
-        remaining = {}
+        result = {}
         for b in self.benchmarks:
-            rem, corrupted = b.status()
+            rem, corrupted = b.check()
 
-            if b.rank_size not in remaining:
-              remaining[b.rank_size] = 0
+            key = f"{b.op}_{b.method}{b.suffix}"
+            if key not in result:
+              result[key] = pandas.DataFrame()
 
-            remaining[b.rank_size] += len(rem) + len(corrupted)
+            result[key].loc[b.dataset, b.rank_size] = len(rem) + len(corrupted)
 
-        print(remaining)
+        total_remaining = 0
+        for k, v in result.items():
+          print(k)
+          print(v)
+          total_remaining += sum(v)
 
+        print(f"Total remaining benchmarks: {total_remaining}")
 
 events = {
     'benchmark_started': [],
