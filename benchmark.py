@@ -6,6 +6,7 @@ import sys
 import tempfile
 import time
 import argparse
+import hashlib
 
 ROUNDS = 10
 MPI_ARGS = shlex.split("--bind-to none --tag-output --timestamp-output --merge-stderr-to-stdout")
@@ -36,6 +37,10 @@ class Benchmark:
     @property
     def csv_path(self):
         return os.path.join(OUTPUT_DIR, self.name + '.csv')
+
+    @property
+    def result_path(self):
+      return f"{self.csv_path[:-4]}.{self.rank_size}.tif"
 
     def to_pandas(self):
         data = pandas.read_csv(self.csv_path, names=self.columns)
@@ -166,6 +171,7 @@ class Benchmark:
 class All:
     def __init__(self):
         self.benchmarks = []
+        self.checksum_path = os.path.join(OUTPUT_DIR, "checksum")
 
     def add(self, op, methods, datasets, ranks, suffix='', env=None):
         for method in methods:
@@ -185,10 +191,42 @@ class All:
             if b.rank_size == nodes:
                 b.benchmark_remaining(dry_run, fail_on_error, single)
 
+    def load_checksums(self):
+      try:
+        with open(self.checksum_path) as f:
+          pairs = [i.split() for i in f.read().splitlines()]
+          result = {}
+          for pair in pairs:
+            if len(pair) != 2:
+              print(f"Invalid: {pair}")
+            else:
+              result[pair[1]] = pair[0]
+          return result
+      except FileNotFoundError:
+        return {}
+
+    def checksum(self, path):
+      with open(path, "rb") as f:
+        checksum = hashlib.md5()
+        while True:
+          b = f.read(8192)
+          if not b:
+            break
+          checksum.update(b)
+        return checksum.hexdigest()
+
     def status(self):
+        checksums = self.load_checksums()
+
         result = {}
         for b in self.benchmarks:
             rem, corrupted = b.check()
+
+            checksum_key = os.path.splitext(os.path.basename(b.result_path))[0]
+            if checksum_key not in checksums:
+              checksums[checksum_key] = self.checksum(b.result_path)
+              with open(self.checksum_path, "a") as f:
+                f.write(f"{checksums[checksum_key]} {checksum_key}\n")
 
             key = f"{b.op}_{b.method}{b.suffix}"
             if key not in result:
