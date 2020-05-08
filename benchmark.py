@@ -70,9 +70,9 @@ class Benchmark:
         print(f"\tworld_size={self.rank_size}")
         missing, corrupted = self.check()
         if missing:
-            print(f"\t{missing=}")
+            print(f"\tmissing={missing}")
         if corrupted:
-            print(f"\t{corrupted=}")
+            print(f"\tcorrupted={corrupted}")
         print()
         return missing, corrupted
 
