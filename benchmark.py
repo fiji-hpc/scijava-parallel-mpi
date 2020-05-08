@@ -256,8 +256,11 @@ def fire_event(name, *args, **kwargs):
     for fn in events[name]:
         fn(*args, **kwargs)
 
-with open("notify.py") as f:
-    exec(f.read())
+try:
+    with open("notify.py") as f:
+        exec(f.read())
+except FileNotFoundError:
+    pass
 
 
 parser = argparse.ArgumentParser()
