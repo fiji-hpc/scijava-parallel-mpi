@@ -234,13 +234,21 @@ class All:
 
             result[key].loc[b.dataset, b.rank_size] = len(rem) + len(corrupted)
 
-        total_remaining = 0
+        total_remaining = {}
         for k, v in result.items():
           print(k)
           print(v)
-          total_remaining += sum(v)
+          print()
 
-        print(f"Total remaining benchmarks: {total_remaining}")
+          for nodes, missing in v.sum().iteritems():
+            if nodes not in total_remaining:
+              total_remaining[nodes] = 0
+ 
+            total_remaining[nodes] += missing
+
+        print("Remaining benchmarks:")
+        print("\n".join([f"  {k: >2}: {v}" for k, v in total_remaining.items()]))
+        print(f"Total: {sum(total_remaining.values())}")
 
 events = {
     'benchmark_started': [],
@@ -285,6 +293,18 @@ b.add(
     methods=['mpi'],
     ranks=even_nodes(16),
     datasets=datasets('test_2048x2048x{i}x{i}x{i}', [1] + list(range(2, 19, 2))),
+)
+b.add(
+    op='convolution',
+    methods=['mpisingle'],
+    ranks=even_nodes(16),
+    datasets=datasets('test_2048x2048x{i}x{i}x{i}', [1] + list(range(2, 13, 2))),
+)
+b.add(
+    op='add',
+    methods=['mpi', 'mpisingle'],
+    ranks=even_nodes(8),
+    datasets=datasets('test_2048x2048x{i}', [500, 1000, 1500, 2000, 2500, 3000]),
 )
 
 if args.action == 'benchmark':
