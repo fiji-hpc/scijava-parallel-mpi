@@ -76,7 +76,7 @@ class Benchmark:
         print()
         return missing, corrupted
 
-    def benchmark_remaining(self, dry_run=False, fail_on_error=False, single=False):
+    def benchmark_remaining(self, dry_run=False, fail_on_error=False, single=False, **kwargs):
         missing_runs = self.check()[0]
         for run in missing_runs:
             success = self.make_benchmark(run, dry_run)
@@ -123,7 +123,7 @@ class Benchmark:
         if self.method == 'default':
             env['B_NO_MPI_OPS'] = 1
         elif self.method == 'clij':
-            self.op += 'clij'
+            script += 'clij'
         elif self.method == 'mpisingle':
             env['B_THREADS_NUM'] = 1
             env['OMP_NUM_THREADS'] = 1
@@ -142,7 +142,7 @@ class Benchmark:
 
         with open(os.path.join(OUTPUT_DIR, f"{self.name}.out"), "a") as f:
             f.write("\n\n\n\n")
-            f.write(shlex.join(cmd))
+            f.write(" ".join([shlex.quote(c) for c in cmd]))
             p = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, env={k: str(v) for k, v in env.items()})
             output = ""
             while True:
@@ -186,10 +186,10 @@ class All:
                         env=env,
                     ))
 
-    def benchmark_remaining(self, nodes, dry_run=False, fail_on_error=False, single=False):
+    def benchmark_remaining(self, nodes, **kwargs):
         for b in self.benchmarks:
-            if b.rank_size == nodes:
-                b.benchmark_remaining(dry_run, fail_on_error, single)
+            if b.rank_size == nodes and self.is_acceptable(b, **kwargs):
+                b.benchmark_remaining(**kwargs)
 
     def load_checksums(self):
       try:
@@ -215,18 +215,31 @@ class All:
           checksum.update(b)
         return checksum.hexdigest()
 
-    def status(self):
+    def is_acceptable(self, benchmark, **kwargs):
+        for attr in ['method', 'op']:
+            if attr in kwargs and kwargs[attr] is not None and getattr(benchmark, attr) != kwargs[attr]:
+                return False
+        return True
+        
+
+    def status(self, **kwargs):
         checksums = self.load_checksums()
 
         result = {}
         for b in self.benchmarks:
+            if not self.is_acceptable(b, **kwargs):
+                continue
+
             rem, corrupted = b.check()
 
             checksum_key = os.path.splitext(os.path.basename(b.result_path))[0]
             if checksum_key not in checksums:
-              checksums[checksum_key] = self.checksum(b.result_path)
-              with open(self.checksum_path, "a") as f:
-                f.write(f"{checksums[checksum_key]} {checksum_key}\n")
+              try:
+                checksums[checksum_key] = self.checksum(b.result_path)
+                with open(self.checksum_path, "a") as f:
+                  f.write(f"{checksums[checksum_key]} {checksum_key}\n")
+              except FileNotFoundError:
+                  pass
 
             key = f"{b.op}_{b.method}{b.suffix}"
             if key not in result:
@@ -272,11 +285,17 @@ except FileNotFoundError:
 
 
 parser = argparse.ArgumentParser()
-parser.add_argument('action')
-parser.add_argument('--dry-run', action='store_true')
-parser.add_argument('--nodes', required=True, type=int)
-parser.add_argument('--fail-on-error', action='store_true')
-parser.add_argument('--single', action='store_true')
+parser.add_argument('--op')
+parser.add_argument('--method')
+cmdsparser = parser.add_subparsers(dest='action')
+subparser = cmdsparser.add_parser('status')
+subparser = cmdsparser.add_parser('benchmark')
+subparser.add_argument('--dry-run', action='store_true')
+subparser.add_argument('--nodes', required=True, type=int)
+subparser.add_argument('--fail-on-error', action='store_true')
+subparser.add_argument('--single', action='store_true')
+
+
 args = parser.parse_args()
 
 
@@ -302,20 +321,15 @@ b.add(
 )
 b.add(
     op='add',
-    methods=['mpi', 'mpisingle'],
-    ranks=even_nodes(8),
-    datasets=datasets('test_2048x2048x{i}', [500, 1000, 1500, 2000, 2500, 3000]),
+    methods=['clij'],
+    ranks=[1],
+    datasets=datasets('test_2048x2048x{i}', [10, 50, 100, 500]),
 )
 
 if args.action == 'benchmark':
-    b.benchmark_remaining(
-        args.nodes,
-        dry_run=args.dry_run,
-        fail_on_error=args.fail_on_error,
-        single=args.single,
-    )
+    b.benchmark_remaining(**vars(args))
 elif args.action == 'status':
-    b.status()
+    b.status(**vars(args))
 else:
   print("unknown action")
 
