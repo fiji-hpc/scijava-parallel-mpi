@@ -217,7 +217,7 @@ class All:
 
     def is_acceptable(self, benchmark, **kwargs):
         for attr in ['method', 'op']:
-            if attr in kwargs and kwargs[attr] is not None and getattr(benchmark, attr) != kwargs[attr]:
+            if attr in kwargs and kwargs[attr] is not None and getattr(benchmark, attr) not in kwargs[attr]:
                 return False
         return True
         
@@ -283,10 +283,9 @@ try:
 except FileNotFoundError:
     pass
 
-
 parser = argparse.ArgumentParser()
-parser.add_argument('--op')
-parser.add_argument('--method')
+parser.add_argument('--op', type=lambda s: s.split(','))
+parser.add_argument('--method', type=lambda s: s.split(','))
 cmdsparser = parser.add_subparsers(dest='action')
 subparser = cmdsparser.add_parser('status')
 subparser = cmdsparser.add_parser('benchmark')
