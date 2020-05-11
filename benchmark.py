@@ -127,8 +127,12 @@ class Benchmark:
         elif self.method == 'mpisingle':
             env['B_THREADS_NUM'] = 1
             env['OMP_NUM_THREADS'] = 1
-        elif self.method == 'native':
+        elif self.method == 'nativempi':
             env['B_USE_NATIVE'] = 1
+        elif self.method == 'nativempisingle':
+            env['B_USE_NATIVE'] = 1
+            env['B_THREADS_NUM'] = 1
+            env['OMP_NUM_THREADS'] = 1
         elif self.method != 'mpi':
             raise Exception(f"Unknown method: {self.method}")
 
@@ -145,6 +149,7 @@ class Benchmark:
         with open(os.path.join(OUTPUT_DIR, f"{self.name}.out"), "a") as f:
             f.write("\n\n\n\n")
             f.write(" ".join([shlex.quote(c) for c in cmd]))
+            print(" ".join([shlex.quote(c) for c in cmd]))
             p = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, env={k: str(v) for k, v in env.items()})
             output = ""
             while True:
@@ -330,7 +335,7 @@ b.add(
 )
 b.add(
     op='add',
-    methods=['native'],
+    methods=['nativempi'],
     ranks=[4],
     datasets=datasets('test_2048x2048x{i}', [10, 50, 100, 500, 1000, 1500, 2000, 2500, 3000]),
 )
