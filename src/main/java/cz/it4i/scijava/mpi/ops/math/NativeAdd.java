@@ -40,7 +40,7 @@ public class NativeAdd<T extends NumericType<T>> extends
         measureCatch("copyToNative", () -> {
             Native.copyToNative((PlanarImg) ((DefaultDataset) input).getImgPlus().getImg(), inputMem);
         });
-        measureCatch("native_minfilter", () -> {
+        measureCatch("native_add", () -> {
             Native.NativeLib.INSTANCE.add(outputMem, inputMem, Intervals.numElements(elements), value.getByte());
         });
         measureCatch("copyFromNative", () -> {
