@@ -127,6 +127,8 @@ class Benchmark:
         elif self.method == 'mpisingle':
             env['B_THREADS_NUM'] = 1
             env['OMP_NUM_THREADS'] = 1
+        elif self.method == 'native':
+            env['B_USE_NATIVE'] = 1
         elif self.method != 'mpi':
             raise Exception(f"Unknown method: {self.method}")
 
@@ -177,6 +179,8 @@ class All:
         for method in methods:
             for dataset in datasets:
                 for rank in ranks:
+                    if method == 'default' and rank != 1:
+                      continue
                     self.benchmarks.append(Benchmark(
                         op=op,
                         method=method,
@@ -317,6 +321,18 @@ b.add(
     methods=['mpisingle'],
     ranks=even_nodes(16),
     datasets=datasets('test_2048x2048x{i}x{i}x{i}', [1] + list(range(2, 13, 2))),
+)
+b.add(
+    op='add',
+    methods=['mpisingle', 'mpi', 'default'],
+    ranks=even_nodes(8),
+    datasets=datasets('test_2048x2048x{i}', [10, 50, 100, 500, 1000, 1500, 2000, 2500, 3000]),
+)
+b.add(
+    op='add',
+    methods=['native'],
+    ranks=[4],
+    datasets=datasets('test_2048x2048x{i}', [10, 50, 100, 500, 1000, 1500, 2000, 2500, 3000]),
 )
 b.add(
     op='add',
