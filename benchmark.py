@@ -346,6 +346,19 @@ b.add(
     datasets=datasets('test_2048x2048x{i}', [10, 50, 100, 500]),
 )
 
+b.add(
+    op='minfilter',
+    methods=['default', 'clij'],
+    ranks=[1],
+    datasets=datasets('test_2048x2048x{i}', [10, 50, 100, 500]),
+)
+b.add(
+    op='minfilter',
+    methods=['mpi', 'nativempi'],
+    ranks=[2, 4, 6, 8],
+    datasets=datasets('test_2048x2048x{i}', [10, 50, 100, 500, 1000]),
+)
+
 if args.action == 'benchmark':
     b.benchmark_remaining(**vars(args))
 elif args.action == 'status':
