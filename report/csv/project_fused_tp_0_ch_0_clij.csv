@@ -1,0 +1,12 @@
+read,0,1,0,5821
+CLIJ_create,0,1,0,273
+CLIJ_push,0,1,0,2120
+CLIJ_maximumZProjection,0,1,0,431
+CLIJ_pull,0,1,0,31
+total_op,0,1,0,2880
+CLIJ_create,0,1,1,20
+CLIJ_push,0,1,1,2108
+CLIJ_maximumZProjection,0,1,1,419
+CLIJ_pull,0,1,1,21
+total_op,0,1,1,2580
+write,0,1,2,33

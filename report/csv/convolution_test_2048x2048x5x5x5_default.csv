@@ -4,10 +4,3 @@ read,0,1,0,8426
 net.imagej.ops.Ops.Create.Img,0,1,0,91
 net.imagej.ops.Ops.Filter.Convolve,0,1,0,191707
 total_op,0,1,0,191814
-net.imagej.ops.Ops.Create.Img,0,1,1,84
-net.imagej.ops.Ops.Filter.Convolve,0,1,1,174933
-total_op,0,1,1,175029
-net.imagej.ops.Ops.Create.Img,0,1,2,66
-net.imagej.ops.Ops.Filter.Convolve,0,1,2,198989
-total_op,0,1,2,199080
-write,0,1,2,2822

@@ -1,0 +1,12 @@
+read,0,1,0,6587
+net.imagej.ops.Ops.Create.ImgFactory,0,1,0,2
+net.imagej.ops.Ops.Create.Img,0,1,0,132
+com.mycompany.imagej.ops.parallel.Parallel,0,1,0,1017
+net.imagej.ops.Ops.Transform.Project,0,1,0,1026
+total_op,0,1,0,1239
+net.imagej.ops.Ops.Create.ImgFactory,0,1,1,1
+net.imagej.ops.Ops.Create.Img,0,1,1,8
+com.mycompany.imagej.ops.parallel.Parallel,0,1,1,318
+net.imagej.ops.Ops.Transform.Project,0,1,1,326
+total_op,0,1,1,367
+write,0,1,2,391
