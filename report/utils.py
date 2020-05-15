@@ -1,13 +1,14 @@
 import pandas as pd
 import matplotlib.pyplot as plt
 import os
+import re
 from IPython.display import display, Markdown
 
-def load_dataset(path, prefix):
+def load_dataset(path, regexp):
     columns = ['stat', 'rank', 'size', 'round', 'time_ms']
     data = pd.DataFrame(columns=columns + ['method'])
     for file in os.listdir(path):
-        if not file.endswith('.csv') or file == 'stats.csv' or not file.startswith(prefix):
+        if not file.endswith('.csv') or file == 'stats.csv' or not re.match(regexp, file):
             continue
 
         d = pd.read_csv(os.path.join(path, file), names=columns)
@@ -82,21 +83,23 @@ def plot_common(data, algorithm, method, legend):
     plt.savefig(f'figures/{algorithm}_{method}_3d.pdf')
     plt.show()
     
+    gather_time = aggregate(data, method=method, stat='gather', aggfunc='median', print=False).reset_index().melt(id_vars=['image_size'], value_name='time_ms')
+    if not gather_time.empty:
+        display(Markdown("## MPI Gahering time"))
+        plot_surface(gather_time, legend)
+        plt.savefig(f'figures/{algorithm}_{method}_gathertime.pdf')
+        plt.show()
     
-    display(Markdown("## MPI Gahering time"))
-    plot_surface(aggregate(data, method=method, stat='gather', aggfunc='median', print=False).reset_index().melt(id_vars=['image_size'], value_name='time_ms'), legend)
-    plt.savefig(f'figures/{algorithm}_{method}_gathertime.pdf')
-    plt.show()
+        plot_quantiles(data, method, 'gather', legend=legend)
+        plt.savefig(f'figures/{algorithm}_{method}_time.pdf', bbox_inches='tight')
+        plt.show()
     
-    plot_quantiles(data, method, 'gather', legend=legend)
-    plt.savefig(f'figures/{algorithm}_{method}_time.pdf', bbox_inches='tight')
-    plt.show()
-    
-    
-    display(Markdown("## barrier - waiting for all nodes before result transfer"))
-    plot_quantiles(data, method, 'barrier', legend=legend)
-    plt.savefig(f'figures/{algorithm}_{method}_time.pdf', bbox_inches='tight')
-    plt.show()
+    p5 = aggregate(data, method=method, stat='barrier', aggfunc='median')
+    if not p5.empty:
+        display(Markdown("## barrier - waiting for all nodes before result transfer"))
+        plot_quantiles(data, method, 'barrier', legend=legend)
+        plt.savefig(f'figures/{algorithm}_{method}_time.pdf', bbox_inches='tight')
+        plt.show()
     
     
     display(Markdown("## Dataset read time"))
