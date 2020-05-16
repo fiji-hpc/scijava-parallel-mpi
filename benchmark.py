@@ -355,7 +355,7 @@ b.add(
 b.add(
     op='minfilter',
     methods=['mpi', 'nativempi'],
-    ranks=[2, 4, 6, 8],
+    ranks=[1, 2, 4, 6, 8],
     datasets=datasets('test_2048x2048x{i}', [10, 50, 100, 500, 1000]),
 )
 
