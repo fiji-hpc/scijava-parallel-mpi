@@ -3,6 +3,7 @@
 #@ String input_path
 #@ String output_path
 #@ UIService ui
+#@ DatasetService datasetService
 #@ int rounds
 
 from cz.it4i.scijava.mpi import Measure
@@ -15,6 +16,6 @@ def fn():
 
 input = scifio.datasetIO().open(input_path)
 output = Measure.benchmark(fn, rounds)
-#scifio.datasetIO().save(output, output_path)
+scifio.datasetIO().save(datasetService.create(output), output_path)
 #ui.show(output)
 print("OK")
