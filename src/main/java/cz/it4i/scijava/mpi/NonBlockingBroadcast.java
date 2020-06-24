@@ -87,22 +87,27 @@ public class NonBlockingBroadcast {
             if(MPIUtils.getRank() == root) {
                 long offset = 0;
                 for(Block block: blocks) {
-                    if (block.array instanceof byte[]) {
-                        memory.write(offset, (byte[]) block.array, block.offset, block.len);
-                    } else if (block.array instanceof short[]) {
-                        memory.write(offset, (short[]) block.array, block.offset, block.len);
-                    } else if (block.array instanceof int[]) {
-                        memory.write(offset, (int[]) block.array, block.offset, block.len);
-                    } else if (block.array instanceof long[]) {
-                        memory.write(offset, (long[]) block.array, block.offset, block.len);
-                    } else if (block.array instanceof float[]) {
-                        memory.write(offset, (float[]) block.array, block.offset, block.len);
-                    } else if (block.array instanceof double[]) {
-                        memory.write(offset, (double[]) block.array, block.offset, block.len);
-                    } else {
-                        throw new RuntimeException("Unsupported type: " + block.array);
+                    int sent = 0;
+                    while(sent < block.len) {
+                        int chunk = Math.min((int) (2147483640L / getTypeSize()), block.len - sent);
+                        if (block.array instanceof byte[]) {
+                            memory.write(offset, (byte[]) block.array, block.offset + sent, chunk);
+                        } else if (block.array instanceof short[]) {
+                            memory.write(offset, (short[]) block.array, block.offset + sent, chunk);
+                        } else if (block.array instanceof int[]) {
+                            memory.write(offset, (int[]) block.array, block.offset + sent, chunk);
+                        } else if (block.array instanceof long[]) {
+                            memory.write(offset, (long[]) block.array, block.offset + sent, chunk);
+                        } else if (block.array instanceof float[]) {
+                            memory.write(offset, (float[]) block.array, block.offset + sent, chunk);
+                        } else if (block.array instanceof double[]) {
+                            memory.write(offset, (double[]) block.array, block.offset + sent, chunk);
+                        } else {
+                            throw new RuntimeException("Unsupported type: " + block.array);
+                        }
+                        sent += chunk;
+                        offset += chunk * getTypeSize();
                     }
-                    offset += block.len * getTypeSize();
                 }
             }
 
