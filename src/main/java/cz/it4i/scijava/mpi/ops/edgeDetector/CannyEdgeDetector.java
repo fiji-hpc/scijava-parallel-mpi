@@ -17,6 +17,7 @@ import net.imglib2.util.Pair;
 import net.imglib2.view.IterableRandomAccessibleInterval;
 import net.imglib2.view.Views;
 import org.scijava.plugin.Attr;
+import org.scijava.plugin.Parameter;
 import org.scijava.plugin.Plugin;
 
 import java.util.function.Consumer;
@@ -29,8 +30,11 @@ public class CannyEdgeDetector<I extends RealType<I>, O extends RealType<O>>
         AbstractUnaryFunctionOp<RandomAccessibleInterval<I>, RandomAccessibleInterval<O>>
         implements EdgeDetector {
 
-    double low = 0.05;
-    double high = 0.15;
+    @Parameter(required = false)
+    double lowThreshold = 0.05;
+
+    @Parameter(required = false)
+    double highThreshold = 0.15;
 
     private RandomAccessibleInterval<DoubleType> sobelX;
     private RandomAccessibleInterval<DoubleType> sobelY;
@@ -87,9 +91,9 @@ public class CannyEdgeDetector<I extends RealType<I>, O extends RealType<O>>
         long[] position = new long[3];
         while(cur.hasNext()) {
             double val = cur.get().get();
-            if(val < low) {
+            if(val < lowThreshold) {
                 cur.get().set(0);
-            } else if(val > high) {
+            } else if(val > highThreshold) {
                 cur.localize(position);
                 walk(position, edges2);
                 cur.get().set(1);
@@ -100,7 +104,7 @@ public class CannyEdgeDetector<I extends RealType<I>, O extends RealType<O>>
         cur.reset();
         cur.next();
         while(cur.hasNext()) {
-            if(cur.get().get() < high) {
+            if(cur.get().get() < highThreshold) {
                 cur.get().set(0);
             }
             cur.fwd();
@@ -218,7 +222,7 @@ public class CannyEdgeDetector<I extends RealType<I>, O extends RealType<O>>
             return;
         }
 
-        if(val > low) {
+        if(val > lowThreshold) {
             ra.get().set(1);
             for(int i = -1; i <= 1; i++) {
                 for(int j = -1; j <= 1; j++) {
