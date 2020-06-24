@@ -88,7 +88,7 @@ public class CannyEdgeDetector<I extends RealType<I>, O extends RealType<O>>
         Cursor<DoubleType> cur = edges2.localizingCursor();
         cur.reset();
         cur.next();
-        long[] position = new long[3];
+        long[] position = new long[g.numDimensions()];
         while(cur.hasNext()) {
             double val = cur.get().get();
             if(val < lowThreshold) {
