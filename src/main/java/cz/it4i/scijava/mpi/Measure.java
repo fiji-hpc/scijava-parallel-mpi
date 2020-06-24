@@ -18,9 +18,11 @@ public class Measure {
         round++;
     }
 
-    public static <T> T measure(String desc, Supplier<T> cb) throws Exception {
-        long start = System.nanoTime();
-        T ret = cb.run();
+    public static long start() {
+        return System.nanoTime();
+    }
+
+    public static long end(String desc, long start) {
         int time_ms = (int) ((System.nanoTime() - start) / 1000000.0);
         System.out.println(desc + ": " + time_ms / 1000.0 + "s");
 
@@ -35,9 +37,17 @@ public class Measure {
                 //          FileLock lock = out.getChannel().lock();
                 out.write((desc + "," + MPIUtils.getRank() + "," + MPIUtils.getSize() + "," + round + "," + time_ms + "\n").getBytes());
                 //            lock.release();
+            } catch(Exception e) {
+                throw new RuntimeException(e);
             }
         }
+        return start();
+    }
 
+    public static <T> T measure(String desc, Supplier<T> cb) throws Exception {
+        long start = start();
+        T ret = cb.run();
+        end(desc, start);
         return ret;
     }
 
