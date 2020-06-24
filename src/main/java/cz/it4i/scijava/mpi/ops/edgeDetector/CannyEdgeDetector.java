@@ -29,13 +29,13 @@ public class CannyEdgeDetector<I extends RealType<I>, O extends RealType<O>>
         AbstractUnaryFunctionOp<RandomAccessibleInterval<I>, RandomAccessibleInterval<O>>
         implements EdgeDetector {
 
-    static double low = 0.05;
-    static double high = 0.15;
-
-    static Img<DoubleType> visited;
+    double low = 0.05;
+    double high = 0.15;
 
     private RandomAccessibleInterval<DoubleType> sobelX;
     private RandomAccessibleInterval<DoubleType> sobelY;
+
+    private Img<DoubleType> visited;
 
     @Override
     public void initialize() {
@@ -71,12 +71,16 @@ public class CannyEdgeDetector<I extends RealType<I>, O extends RealType<O>>
         Img<DoubleType> edges = ops().create().img(G);
         nonMaximumSupression(G, fi, edges);
 
-        Img<DoubleType> edges2 = ops().create().img(G);
+        return edgeTrackingHysteresis(G, edges);
+    }
+
+    private RandomAccessibleInterval edgeTrackingHysteresis(RandomAccessibleInterval<DoubleType> g, Img<DoubleType> edges) {
+        Img<DoubleType> edges2 = ops().create().img(g);
         Pair<DoubleType, DoubleType> minmax = ops().stats().minMax(edges);
 
         ops().image().normalize(edges2, edges, minmax.getA(), minmax.getB(), new DoubleType(0), new DoubleType(1.0));
 
-        visited = ops().create().img(G);
+        visited = ops().create().img(g);
         Cursor<DoubleType> cur = edges2.localizingCursor();
         cur.reset();
         cur.next();
@@ -101,8 +105,7 @@ public class CannyEdgeDetector<I extends RealType<I>, O extends RealType<O>>
             }
             cur.fwd();
         }
-
-        return (RandomAccessibleInterval) edges2;
+        return edges2;
     }
 
     private void nonMaximumSupression(RandomAccessibleInterval<DoubleType> g, RandomAccessibleInterval<DoubleType> fi, Img<DoubleType> edges) {
@@ -195,7 +198,7 @@ public class CannyEdgeDetector<I extends RealType<I>, O extends RealType<O>>
         });
     }
 
-    private static void walk(long[] posit, RandomAccessibleInterval<DoubleType> img) {
+    private void walk(long[] posit, RandomAccessibleInterval<DoubleType> img) {
         long[] position = new long[img.numDimensions()];
         position[0] = posit[0];
         position[1] = posit[1];
@@ -223,8 +226,8 @@ public class CannyEdgeDetector<I extends RealType<I>, O extends RealType<O>>
                         continue;
                     }
 
-                    position[0] += i;
-                    position[1] += j;
+                    position[0] = posit[0] + i;
+                    position[1] = posit[1] + j;
                     if(position[0] < 0 || position[0] >= img.dimension(0) || position[1] < 0 || position[1] >= img.dimension(1)) {
                         continue;
                     }
