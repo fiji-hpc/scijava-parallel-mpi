@@ -35,23 +35,104 @@ public class CannyDetector {
     }
 
     public static double at(RandomAccess<DoubleType> ga, long x, long y) {
-        ga.setPosition(y, 1);
         ga.setPosition(x, 0);
-        return ga.get().get();
+        ga.setPosition(y, 1);
+        return ga.get().getRealDouble();
     }
 
     public static void main(String[] args) throws Exception {
         ImageJ ij = new ImageJ();
-
         OpService ops = ij.op();
         SCIFIO scifio = ij.scifio();
 /*
-        RandomAccessibleInterval imgRGB = scifio.datasetIO().open("/home/daniel/out.tif");
-        Img fi = ops.create().img(imgRGB);
-        ops.run(MPIRankColor.class, fi, imgRGB);
-        ij.ui().show(fi);
-        //ij.scifio().datasetIO().save(ij.dataset().create(imgRGB), "/tmp/a.tif");
- */
+        {
+            RandomAccessibleInterval<UnsignedByteType> input = (RandomAccessibleInterval) scifio.datasetIO().open("/tmp/9.tif");
+
+            Dimensions channelDim = Views.hyperSlice(input, 2, 0);
+            RandomAccessibleInterval<UnsignedByteType> R = ops.create().img(channelDim, new UnsignedByteType());
+            RandomAccessibleInterval<UnsignedByteType> G = ops.create().img(channelDim, new UnsignedByteType());
+            RandomAccessibleInterval<UnsignedByteType> B = ops.create().img(channelDim, new UnsignedByteType());
+
+            int[] colors = {
+                    0x300000,
+                    0x003000,
+                    0x000030,
+                    0x303000,
+                    0x003030,
+                    0x300030,
+            };
+
+            ops.run(Parallel.class, R, (Consumer<Chunk<UnsignedByteType>>) chunk -> {
+                long[] dim = Intervals.dimensionsAsLongArray(R);
+                long[] pos = new long[R.numDimensions()];
+
+                Cursor<UnsignedByteType> Rc = chunk.localizingCursor();
+                Rc.fwd();
+                Rc.localize(pos);
+
+                Cursor<UnsignedByteType> Gc = new IterableRandomAccessibleInterval<>(G).cursor();
+                Cursor<UnsignedByteType> Bc = new IterableRandomAccessibleInterval<>(B).cursor();
+                long offset = IntervalIndexer.positionToIndex(pos, dim) + 1;
+                Gc.jumpFwd(offset);
+                Bc.jumpFwd(offset);
+
+                Cursor<UnsignedByteType> Rcin = Views.hyperSlice(input, 2, 0).cursor();
+                Cursor<UnsignedByteType> Gcin = Views.hyperSlice(input, 2, 1).cursor();
+                Cursor<UnsignedByteType> Bcin = Views.hyperSlice(input, 2, 2).cursor();
+                Rcin.jumpFwd(offset);
+                Gcin.jumpFwd(offset);
+                Bcin.jumpFwd(offset);
+
+                int color = colors[MPIUtils.getRank()];
+
+                while(Rc.hasNext()) {
+                    Rc.get().set(Math.min(255, Rcin.get().get() + ((color & 0xFF0000) >> 16)));// + (color & 0xFF0000) >> 16);
+                    Gc.get().set(Math.min(255, Gcin.get().get() + ((color & 0xFF00) >> 8)));
+                    Bc.get().set(Math.min(255, Bcin.get().get() + (color & 0xFF)));
+
+                    Rcin.fwd();
+                    Gcin.fwd();
+                    Bcin.fwd();
+
+                    Rc.fwd();
+                    Gc.fwd();
+                    Bc.fwd();
+                }
+            });
+
+            new Chunk<UnsignedByteType>(new IterableRandomAccessibleInterval<>(G), MPIUtils.getSize()).sync();
+            new Chunk<UnsignedByteType>(new IterableRandomAccessibleInterval<>(B), MPIUtils.getSize()).sync();
+
+
+            Dataset d = ij.dataset().create(Views.permute(Views.stack(R, G, B), 2, 3));
+            d.initializeColorTables(3);
+            d.setColorTable(ColorTables.RED, 0);
+            d.setColorTable(ColorTables.GREEN, 1);
+            d.setColorTable(ColorTables.BLUE, 2);
+            d.setCompositeChannelCount(3);
+            d.axis(2).setType(Axes.CHANNEL);
+            d.setRGBMerged(true);
+            ij.scifio().datasetIO().save(d, "/tmp/a.tif");
+            ij.ui().show(d);
+
+            for(int i = 0; i < input.dimension(3); i++) {
+                Dataset xx = ij.dataset().create((RandomAccessibleInterval) Views.hyperSlice(d, 3, i));
+                xx.setCompositeChannelCount(3);
+                ij.scifio().datasetIO().save(xx, "/tmp/frame_" + i + ".png");
+            }
+            Thread.sleep(1000000);
+        }*/
+        /*
+        RandomAccessibleInterval out = ops.create().img(input);
+        ops.run(MPIRankColor.class, out, input);
+        ij.ui().show(out);
+        SCIFIOConfig xa = new SCIFIOConfig();
+        xa.imgSaverSetWriteRGB(true);
+
+        Dataset d = ij.dataset().create(out);
+        d.setCompositeChannelCount(3);
+        ij.io().save(d, "/tmp/a.tif");
+        //ij.scifio().datasetIO().save(ij.dataset().create(out), "/tmp/a.tif", xa);*/
 
         // 1. load
         RandomAccessibleInterval imgRGB = scifio.datasetIO().open(args[0]);
@@ -69,19 +150,18 @@ public class CannyDetector {
                 1.0/9, 1.0/9, 1.0/9,
                 1.0/9, 1.0/9, 1.0/9
                  */
-
+/*
                 1.0/16, 2.0/16, 1.0/16,
                 2.0/16, 4.0/16, 2.0/16,
                 1.0/16, 2.0/16, 1.0/16
+ */
 
 
-                /*1/256.0, 4/256.0, 6/256.0, 4/256.0, 1/256.0,
+                1/256.0, 4/256.0, 6/256.0, 4/256.0, 1/256.0,
                 4/256.0, 14/256.0, 24/256.0, 14/256.0, 4/256.0,
                 6/256.0, 24/256.0, 36/256.0, 24/256.0, 6/256.0,
                 4/256.0, 14/256.0, 24/256.0, 14/256.0, 4/256.0,
                 1/256.0, 4/256.0, 6/256.0, 4/256.0, 1/256.0
-
-                 */
         ));
         img = null;
 
@@ -93,7 +173,6 @@ public class CannyDetector {
 
         // 5. non maximum supression
         Img<DoubleType> edges = ops.create().img(G);
-        //TODO: zesynchronizovat!!
         ops.run(Parallel.class, edges, (Consumer<Chunk<DoubleType>>) chunk -> {
             long[] position = new long[G.numDimensions()];
             Cursor<DoubleType> cur = chunk.localizingCursor();
@@ -118,15 +197,16 @@ public class CannyDetector {
                     deg += Math.PI;
                 }
 
-                double alfa = Math.tan(deg);
-                alfa = Math.max(0, Math.min(1, alfa));
+                double alfa = Math.atan(deg);
+                alfa = Math.max(0.0, Math.min(1.0, alfa));
 
                 double Ep = 0, Em = 0;
                 double c = at(ga, x, y);
                 Ep = Em = c + 1;
 
-                int stupne = (int) (deg * 180 / Math.PI);
-                if(stupne >= 0 && stupne <= 45) {
+                double stupne = (deg * 180.0 / Math.PI);
+                if(stupne < 0) throw new RuntimeException("xxx");
+                if(stupne <= 45.0) {
                     Ep = at(ga, x + 1, y) * (alfa) + at(ga, x + 1, y - 1) * (1-alfa);
                     Em = at(ga, x - 1, y) * (alfa) + at(ga, x - 1, y + 1) * (1-alfa);
                 } else if(stupne <= 90) {
@@ -142,7 +222,7 @@ public class CannyDetector {
                     throw new RuntimeException("xxd" + stupne);
                 }
 
-                if (Ep < c && c > Em) {
+                if (Ep <= c && c > Em) {
                     cur.get().set(c);
                 }
                 fia.next();
@@ -191,7 +271,7 @@ public class CannyDetector {
 
 
         //ij.ui().show(edges2);
-        ij.scifio().datasetIO().save(ij.dataset().create(ij.op().convert().uint8(ops.math().multiply(edges2, new DoubleType(255)))), "/tmp/a.jpg");
+        ij.scifio().datasetIO().save(ij.dataset().create(ij.op().convert().uint8(ops.math().multiply(edges2, new DoubleType(255)))), "/tmp/a.tif");
 
       //  ij.io().save(G, "/tmp/a.jpg");
         /*
@@ -271,8 +351,6 @@ public class CannyDetector {
                 fia.next();
             }
         });
-
-        //ij.ui().show(Gx);
     }
 
     private static void walk(long[] posit, RandomAccessibleInterval<DoubleType> img) {
