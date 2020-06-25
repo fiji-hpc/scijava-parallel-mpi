@@ -36,7 +36,6 @@ import net.imagej.ops.special.computer.AbstractBinaryComputerOp;
 import net.imglib2.Cursor;
 import net.imglib2.RandomAccess;
 import net.imglib2.RandomAccessibleInterval;
-import net.imglib2.type.NativeType;
 import net.imglib2.type.numeric.ComplexType;
 import net.imglib2.type.numeric.RealType;
 import net.imglib2.view.Views;
@@ -48,7 +47,7 @@ import java.util.function.Consumer;
 import static cz.it4i.scijava.mpi.Measure.measureCatch;
 
 @Plugin(type = Ops.Filter.Convolve.class, priority = 1000.0D, attrs = {@Attr(name = "MPI", value="true")})
-public class MPIConvolveNaiveC<I extends RealType<I>, O extends RealType<O> & NativeType<O>, K extends RealType<K>, C extends ComplexType<C> & NativeType<C>> extends AbstractBinaryComputerOp<RandomAccessibleInterval<I>, RandomAccessibleInterval<K>, RandomAccessibleInterval<O>>
+public class MPIConvolveNaiveC<I extends RealType<I>, O extends RealType<O>, K extends RealType<K>, C extends ComplexType<C>> extends AbstractBinaryComputerOp<RandomAccessibleInterval<I>, RandomAccessibleInterval<K>, RandomAccessibleInterval<O>>
 		implements Ops.Filter.Convolve
 {
 	public void compute(RandomAccessibleInterval<I> input, RandomAccessibleInterval<K> kernel, RandomAccessibleInterval<O> output) {
