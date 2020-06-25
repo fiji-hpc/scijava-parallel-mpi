@@ -2,7 +2,6 @@ package cz.it4i.scijava.mpi.ops.edgeDetector;
 
 
 import cz.it4i.scijava.mpi.chunk.Chunk;
-import cz.it4i.scijava.mpi.ops.MPIRankColor;
 import cz.it4i.scijava.mpi.ops.parallel.Parallel;
 import net.imagej.ops.special.function.AbstractUnaryFunctionOp;
 import net.imglib2.Cursor;
@@ -24,7 +23,7 @@ import java.util.function.Consumer;
 
 import static cz.it4i.scijava.mpi.Measure.measureCatch;
 
-@Plugin(type = MPIRankColor.class, attrs = {@Attr(name = "MPI", value="true")})
+@Plugin(type = EdgeDetector.class, attrs = {@Attr(name = "MPI", value="true")})
 public class CannyEdgeDetector<I extends RealType<I>, O extends RealType<O>>
         extends
         AbstractUnaryFunctionOp<RandomAccessibleInterval<I>, RandomAccessibleInterval<O>>
@@ -73,9 +72,9 @@ public class CannyEdgeDetector<I extends RealType<I>, O extends RealType<O>>
 
         // 5. non maximum supression
         Img<DoubleType> edges = ops().create().img(G);
-        nonMaximumSupression(G, fi, edges);
+        measureCatch("nonmaximum_supression", () -> nonMaximumSupression(G, fi, edges));
 
-        return edgeTrackingHysteresis(G, edges);
+        return measureCatch("edge_tracking", () -> edgeTrackingHysteresis(G, edges));
     }
 
     private RandomAccessibleInterval edgeTrackingHysteresis(RandomAccessibleInterval<DoubleType> g, Img<DoubleType> edges) {

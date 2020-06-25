@@ -2,7 +2,6 @@ package cz.it4i.scijava.mpi.ops.convert;
 
 import cz.it4i.scijava.mpi.chunk.Chunk;
 import cz.it4i.scijava.mpi.ops.parallel.Parallel;
-import net.imagej.ops.Ops;
 import net.imagej.ops.create.img.CreateImgFromDimsAndType;
 import net.imagej.ops.special.function.AbstractUnaryFunctionOp;
 import net.imglib2.Cursor;
@@ -19,7 +18,7 @@ import org.scijava.plugin.Plugin;
 
 import java.util.function.Consumer;
 
-@Plugin(type = Ops.Transform.Project.class, priority = 0)
+@Plugin(type = RGB2Grayscale.class, priority = 0)
 public class ParalelizedRGB2Grayscale<T extends RealType<T> & NativeType<T>> extends AbstractUnaryFunctionOp<RandomAccessibleInterval<T>, RandomAccessibleInterval<T>> implements RGB2Grayscale {
     @Parameter(required = false)
     double redWeight = 0.2126;
