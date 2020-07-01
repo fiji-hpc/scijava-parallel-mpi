@@ -62,18 +62,15 @@ public class Measure {
        try {
            return measure(desc, cb);
        } catch(Exception e) {
-           e.printStackTrace();
-           System.exit(0);
+           throw new RuntimeException(e);
        }
-       return null;
     }
 
     public static void measureCatch(String desc, Runnable cb) {
         try {
             measure(desc, cb);
         } catch(Exception e) {
-            e.printStackTrace();
-            System.exit(0);
+            throw new RuntimeException(e);
         }
     }
 
