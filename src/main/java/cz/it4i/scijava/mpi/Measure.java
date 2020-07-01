@@ -1,7 +1,11 @@
 package cz.it4i.scijava.mpi;
 
+import org.apache.commons.lang3.StringUtils;
+
 import java.io.FileOutputStream;
+import java.util.ArrayList;
 import java.util.Date;
+import java.util.List;
 
 public class Measure {
     public interface Runnable {
@@ -13,6 +17,7 @@ public class Measure {
     }
 
     private static int round;
+    private static List<String> path = new ArrayList<>();
 
     public static void nextRound() {
         round++;
@@ -35,7 +40,7 @@ public class Measure {
         if(csvPath != null) {
             try (FileOutputStream out = new FileOutputStream(csvPath, true)) {
                 //          FileLock lock = out.getChannel().lock();
-                out.write((desc + "," + MPIUtils.getRank() + "," + MPIUtils.getSize() + "," + round + "," + time_ms + "\n").getBytes());
+                out.write((StringUtils.join(path, ";") + "," + MPIUtils.getRank() + "," + MPIUtils.getSize() + "," + round + "," + time_ms + "\n").getBytes());
                 //            lock.release();
             } catch(Exception e) {
                 throw new RuntimeException(e);
@@ -45,9 +50,11 @@ public class Measure {
     }
 
     public static <T> T measure(String desc, Supplier<T> cb) throws Exception {
+        path.add(desc);
         long start = start();
         T ret = cb.run();
         end(desc, start);
+        path.remove(path.size() - 1);
         return ret;
     }
 
