@@ -1,4 +1,4 @@
-package cz.it4i.scijava.mpi.ops;
+package cz.it4i.scijava.mpi.ops.parallel.debug;
 
 import net.imagej.ops.Op;
 
