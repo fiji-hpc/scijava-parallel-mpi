@@ -45,8 +45,8 @@ public class CannyDetector {
         ));
         Measure.end("gauss_blur", start);
 
-        RandomAccessibleInterval<DoubleType> edges = (RandomAccessibleInterval<DoubleType>) ops.run(EdgeDetector.class, withoutNoise);
+        RandomAccessibleInterval<DoubleType> edges = (RandomAccessibleInterval<DoubleType>) ops.run(EdgeDetector.class, withoutNoise, 0.08, 0.2);
         ij.ui().show(edges);
-        ij.scifio().datasetIO().save(ij.dataset().create(ij.op().convert().uint8(ops.math().multiply(new IterableRandomAccessibleInterval<DoubleType>(edges), new DoubleType(255)))), "/tmp/a.tif");
+        ij.scifio().datasetIO().save(ij.dataset().create(ij.op().convert().uint8(ops.math().multiply(new IterableRandomAccessibleInterval<DoubleType>(edges), new DoubleType(255)))), "/tmp/edge/result.tif");
     }
 }

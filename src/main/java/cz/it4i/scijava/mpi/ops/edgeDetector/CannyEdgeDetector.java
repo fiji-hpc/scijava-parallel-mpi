@@ -3,6 +3,8 @@ package cz.it4i.scijava.mpi.ops.edgeDetector;
 
 import cz.it4i.scijava.mpi.chunk.Chunk;
 import cz.it4i.scijava.mpi.ops.parallel.Parallel;
+import io.scif.SCIFIO;
+import net.imagej.ImageJ;
 import net.imagej.ops.special.function.AbstractUnaryFunctionOp;
 import net.imglib2.Cursor;
 import net.imglib2.RandomAccess;
@@ -74,7 +76,15 @@ public class CannyEdgeDetector<I extends RealType<I>, O extends RealType<O>>
         Img<DoubleType> edges = ops().create().img(G);
         measureCatch("nonmaximum_supression", () -> nonMaximumSupression(G, fi, edges));
 
-        return measureCatch("edge_tracking", () -> edgeTrackingHysteresis(G, edges));
+        RandomAccessibleInterval res = measureCatch("edge_tracking", () -> edgeTrackingHysteresis(G, edges));
+
+        try {
+            ImageJ ij = new ImageJ();
+            ij.scifio().datasetIO().save(ij.dataset().create(res), "/tmp/edge/hysteresis.tif");
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+        return res;
     }
 
     private RandomAccessibleInterval edgeTrackingHysteresis(RandomAccessibleInterval<DoubleType> g, Img<DoubleType> edges) {
@@ -158,6 +168,13 @@ public class CannyEdgeDetector<I extends RealType<I>, O extends RealType<O>>
                 cur.next();
             }
         });
+
+        try {
+            ImageJ ij = new ImageJ();
+            ij.scifio().datasetIO().save(ij.dataset().create(edges), "/tmp/edge/nonmaximal.tif");
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
     }
 
     private void gradients(RandomAccessibleInterval withoutNoise, RandomAccessibleInterval<DoubleType> g, RandomAccessibleInterval<DoubleType> fi) {
@@ -198,6 +215,17 @@ public class CannyEdgeDetector<I extends RealType<I>, O extends RealType<O>>
                     fia.next();
                 }
             });
+
+            try {
+                ImageJ ij = new ImageJ();
+                ij.ui().show(Gx);
+                ij.scifio().datasetIO().save(ij.dataset().create(Gx), "/tmp/edge/Gx.tif");
+                ij.scifio().datasetIO().save(ij.dataset().create(Gy), "/tmp/edge/Gy.tif");
+                ij.scifio().datasetIO().save(ij.dataset().create(g), "/tmp/edge/G.tif");
+                ij.scifio().datasetIO().save(ij.dataset().create(fi), "/tmp/edge/Phi.tif");
+            } catch (Exception e) {
+                throw new RuntimeException(e);
+            }
         });
     }
 
