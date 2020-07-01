@@ -13,7 +13,10 @@ def load_dataset(path, regexp):
 
         d = pd.read_csv(os.path.join(path, file), names=columns)
         d['method'] = file.replace('.csv', '').split('_')[-1]
-        d['image_size'] = int(file.replace('.csv', '').split('_')[-2].split('x')[-1])
+        try:
+            d['image_size'] = int(file.replace('.csv', '').split('_')[-2].split('x')[-1])
+        except:
+            print('Dataset dimension not found in filename')
 
         data = pd.concat([data, d])
         

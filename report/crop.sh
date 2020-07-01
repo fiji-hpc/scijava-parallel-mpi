@@ -3,7 +3,7 @@ tmpfile=$(mktemp)
 trap 'rm -f $tmpfile' EXIT
 
 cd figures || exit 1
-for i in *.pdf; do
+find . -name "*.pdf" | while read i; do
   pdfcrop "$i" "$tmpfile"
   mv "$tmpfile" "$i"
 done
