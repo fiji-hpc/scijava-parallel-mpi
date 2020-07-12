@@ -4,6 +4,7 @@ import org.apache.commons.lang3.StringUtils;
 
 import java.io.FileOutputStream;
 import java.util.ArrayList;
+import java.nio.channels.FileLock;
 import java.util.Date;
 import java.util.List;
 
@@ -38,10 +39,8 @@ public class Measure {
 
         String csvPath = System.getenv("B_STATS_PATH");
         if(csvPath != null) {
-            try (FileOutputStream out = new FileOutputStream(csvPath, true)) {
-                //          FileLock lock = out.getChannel().lock();
+            try (FileOutputStream out = new FileOutputStream(csvPath + "." + MPIUtils.getRank(), true)) {
                 out.write((StringUtils.join(path, ";") + "," + MPIUtils.getRank() + "," + MPIUtils.getSize() + "," + round + "," + time_ms + "\n").getBytes());
-                //            lock.release();
             } catch(Exception e) {
                 throw new RuntimeException(e);
             }
