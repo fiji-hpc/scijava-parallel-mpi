@@ -92,9 +92,15 @@ class Benchmark:
 
         fire_event("benchmark_started", self, run)
         start = time.time()
-        with tempfile.NamedTemporaryFile(dir=OUTPUT_DIR) as f:
-            stats_path = f.name
+        with tempfile.TemporaryDirectory(dir=OUTPUT_DIR) as tempdir:
+            stats_path = os.path.join(tempdir, 'benchmark.csv')
             errors, output = self.run_fiji(stats_path)
+
+            with open(stats_path, "w") as merged:
+                for node_stats in os.listdir(tempdir):
+                    if node_stats.startswith('benchmark.csv.'):
+                        with open(os.path.join(tempdir, node_stats)) as f:
+                            merged.write(f.read())
 
             data = pandas.read_csv(stats_path, names=self.columns)
             op_data = data[data['stat'] == 'total_op']
