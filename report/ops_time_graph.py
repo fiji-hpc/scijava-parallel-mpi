@@ -2,6 +2,7 @@
 import random
 import sys
 import os
+import argparse
 
 class Op:
     def __init__(self, name=''):
@@ -13,21 +14,31 @@ class Op:
     def __str__(self):
         return str(self.name)
 
-if len(sys.argv) != 2:
-    print("Usage: ops_time_graph.py path_to.csv.0")
-    exit(1)
+p = argparse.ArgumentParser()
+p.add_argument('input_path')
+p.add_argument('output_path', nargs='?')
+p.add_argument('--rank')
+p.add_argument('--ranks')
+p.add_argument('--run')
+opts = p.parse_args()
 
-input_path = sys.argv[1]
-output_path = f"{os.path.basename(input_path)}.html"
+if not opts.output_path:
+    opts.output_path = f"{os.path.basename(opts.input_path)}.html"
 
 root = Op()
-with open(input_path) as f:
+with open(opts.input_path) as f:
     for line in f:
-        parts = line.split(',')
-        s = parts[0]
-        ms = int(parts[-1].strip())
+        stat, rank, size, run, time = line.split(',')
+        time = int(time.strip())
 
-        p = s.split(';')
+        if opts.rank and opts.rank != rank:
+            continue
+        if opts.ranks and opts.ranks != size:
+            continue
+        if opts.run and opts.run != run:
+            continue
+
+        p = stat.split(';')
         parent = root
         while p:
             cur = p.pop(0)
@@ -37,7 +48,7 @@ with open(input_path) as f:
 
             parent = parent.childs[cur]
 
-        parent.time_ms = ms
+        parent.time_ms = time
 
 root.time_ms = sum([n.time_ms for n in root.childs.values()])
 
@@ -52,10 +63,7 @@ def walk(node, f):
     if node.parent:
         percent = round(node.time_ms / node.parent.time_ms*100, 2)
         f.write(f"<div style='width: {percent}%;' title='{node.name}, {node.time_ms} ms, {percent}%' class='{'' if node.childs else 'leaf'}'>")
-
-        #f.write(f"<div class='name' style='background: {color()}'>{node.name.split('.')[-1]}</div>")
         f.write(f"<div class='name' style='background: {color()}'>{node.name}</div>")
-        #f.write(" " + str(node.time_ms))
     else:
         f.write(f"<div title='{node.name}'>")
         f.write(node.name)
@@ -67,7 +75,7 @@ def walk(node, f):
         f.write('</div>')
     f.write("</div>")
 
-with open(output_path, "w") as f:
+with open(opts.output_path, "w") as f:
     f.write("""
     <script>
     document.addEventListener('click', (evt) => {
