@@ -36,8 +36,11 @@ public class MPIUtils {
     }
 
     private static void Init() {
-        checkMpiResult(MPILibrary.INSTANCE.MPI_Init(null, null));
-
+		int[] isInitialized = new int[1];
+		checkMpiResult(MPILibrary.INSTANCE.MPI_Initialized(isInitialized));
+		if(isInitialized[0] == 0){
+			checkMpiResult(MPILibrary.INSTANCE.MPI_Init(null, null));
+		}
         for(Field f: MPIUtils.class.getDeclaredFields()) {
             if(!f.getName().startsWith("MPI_")) {
                 continue;
@@ -157,6 +160,7 @@ public class MPIUtils {
         int MPI_Allgatherv(long sendbuf, int sendcount, Pointer sendtype,
                            long recvbuf, int[] recvcount, int[] displs, Pointer recvtype,
                            Pointer comm);
+		int MPI_Initialized(int[] flag);
         int MPI_Init(Pointer argv, Pointer argc);
         int MPI_Finalize();
         int MPI_Comm_rank(Pointer comm, int[] rank);
