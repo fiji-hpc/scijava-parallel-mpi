@@ -1,6 +1,7 @@
 package cz.it4i.scijava.mpi.ops.edgeDetector;
 
 
+import cz.it4i.scijava.mpi.Measure;
 import cz.it4i.scijava.mpi.chunk.Chunk;
 import cz.it4i.scijava.mpi.ops.parallel.Parallel;
 import net.imagej.ops.special.function.AbstractUnaryFunctionOp;
@@ -72,7 +73,10 @@ public class CannyEdgeDetector<I extends RealType<I>, O extends RealType<O>>
 
         // 5. non maximum supression
         Img<DoubleType> edges = ops().create().img(G);
-        measureCatch("nonmaximum_supression", () -> nonMaximumSupression(G, fi, edges));
+        long start = Measure.start();
+        nonMaximumSupression(G, fi, edges);
+        Measure.end("nonmaximum_supression", start);
+        fi = null;
 
         return measureCatch("edge_tracking", () -> edgeTrackingHysteresis(G, edges));
     }
