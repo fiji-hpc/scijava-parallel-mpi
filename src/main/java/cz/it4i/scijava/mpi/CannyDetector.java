@@ -21,20 +21,20 @@ public class CannyDetector {
         Dataset rgb = scifio.datasetIO().open(args[0]);
 
         // Load and convert to grayscale
-        long start = Measure.start();
+        long start = Measure.start("grayscale2rgb");
         RandomAccessibleInterval img = (RandomAccessibleInterval) ops.run(RGB2Grayscale.class, rgb);
-        Measure.end("grayscale2rgb", start);
+        Measure.end(start);
         rgb = null;
 
 
         // Convert to float64 type - double
-        start = Measure.start();
+        start = Measure.start("float64");
         img = ops.convert().float64((IterableInterval) img);
-        Measure.end("float64", start);
+        Measure.end(start);
 
         // Remove a noise
         RandomAccessibleInterval withoutNoise = ops.create().img(img);
-        start = Measure.start();
+        start = Measure.start("gauss_blur");
         ops.filter().convolve(withoutNoise, img, (RandomAccessibleInterval) ops.create().kernel(new double[][]{
                     new double[]{1 / 256.0, 4 / 256.0, 6 / 256.0, 4 / 256.0, 1 / 256.0},
                     new double[]{4 / 256.0, 14 / 256.0, 24 / 256.0, 14 / 256.0, 4 / 256.0},
@@ -43,7 +43,7 @@ public class CannyDetector {
                     new double[]{1 / 256.0, 4 / 256.0, 6 / 256.0, 4 / 256.0, 1 / 256.0}
                 }, new DoubleType()
         ));
-        Measure.end("gauss_blur", start);
+        Measure.end(start);
 
         RandomAccessibleInterval<DoubleType> edges = (RandomAccessibleInterval<DoubleType>) ops.run(EdgeDetector.class, withoutNoise);
         ij.ui().show(edges);

@@ -73,9 +73,9 @@ public class CannyEdgeDetector<I extends RealType<I>, O extends RealType<O>>
 
         // 5. non maximum supression
         Img<FloatType> edges = ops().create().img(G);
-        long start = Measure.start();
+        long start = Measure.start("nonmaximum_supression");
         nonMaximumSupression(G, fi, edges);
-        Measure.end("nonmaximum_supression", start);
+        Measure.end(start);
         fi = null;
 
         return measureCatch("edge_tracking", () -> edgeTrackingHysteresis(G, edges));

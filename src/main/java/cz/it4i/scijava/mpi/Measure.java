@@ -24,12 +24,15 @@ public class Measure {
         round++;
     }
 
-    public static long start() {
+    public static long start(String desc) {
+        path.add(desc);
         return System.nanoTime();
     }
 
-    public static long end(String desc, long start) {
+    public static void end(long start) {
         int time_ms = (int) ((System.nanoTime() - start) / 1000000.0);
+
+        String desc = StringUtils.join(path, ";");
         System.out.println(desc + ": " + time_ms / 1000.0 + "s");
 
         int round = Measure.round;
@@ -40,19 +43,17 @@ public class Measure {
         String csvPath = System.getenv("B_STATS_PATH");
         if(csvPath != null) {
             try (FileOutputStream out = new FileOutputStream(csvPath + "." + MPIUtils.getRank(), true)) {
-                out.write((StringUtils.join(path, ";") + "," + MPIUtils.getRank() + "," + MPIUtils.getSize() + "," + round + "," + time_ms + "\n").getBytes());
+                out.write((desc + "," + MPIUtils.getRank() + "," + MPIUtils.getSize() + "," + round + "," + time_ms + "\n").getBytes());
             } catch(Exception e) {
                 throw new RuntimeException(e);
             }
         }
-        return start();
     }
 
     public static <T> T measure(String desc, Supplier<T> cb) throws Exception {
-        path.add(desc);
-        long start = start();
+        long start = start(desc);
         T ret = cb.run();
-        end(desc, start);
+        end(start);
         path.remove(path.size() - 1);
         return ret;
     }
