@@ -6,16 +6,16 @@
 #@ DatasetService datasets
 
 from cz.it4i.scijava.mpi import Measure
-from net.imglib2.type.numeric.real import DoubleType
+from net.imglib2.type.numeric.real import FloatType
 from net.imglib2.type.numeric.integer import UnsignedByteType
 from net.imglib2.view import Views
 
 start = Measure.start()
 input_dataset = scifio.datasetIO().open(input_path)
-input_dataset = ops.convert().float64(input_dataset)
+input_dataset = ops.convert().float32(input_dataset)
 preprocess = ops.create().img(input_dataset)
 minMax = ops.stats().minMax(input_dataset)
-input_dataset = ops.image().normalize(preprocess, input_dataset, minMax.getA(), minMax.getB(), DoubleType(0), DoubleType(1.0))
+input_dataset = ops.image().normalize(preprocess, input_dataset, minMax.getA(), minMax.getB(), FloatType(0), FloatType(1.0))
 #ui.show(preprocess)
 
 gauss_kernel =  ops.create().kernelGauss([3, 3])
