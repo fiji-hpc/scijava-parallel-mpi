@@ -33,6 +33,7 @@ public class Measure {
         int time_ms = (int) ((System.nanoTime() - start) / 1000000.0);
 
         String desc = StringUtils.join(path, ";");
+        path.remove(path.size() - 1);
         System.out.println(desc + ": " + time_ms / 1000.0 + "s");
 
         int round = Measure.round;
@@ -54,7 +55,6 @@ public class Measure {
         long start = start(desc);
         T ret = cb.run();
         end(start);
-        path.remove(path.size() - 1);
         return ret;
     }
 
