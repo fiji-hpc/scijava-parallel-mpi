@@ -10,7 +10,7 @@ from net.imglib2.type.numeric.real import FloatType
 from net.imglib2.type.numeric.integer import UnsignedByteType
 from net.imglib2.view import Views
 
-start = Measure.start()
+start = Measure.start("total_op")
 input_dataset = scifio.datasetIO().open(input_path)
 input_dataset = ops.convert().float32(input_dataset)
 preprocess = ops.create().img(input_dataset)
@@ -30,5 +30,5 @@ edges = ops.run("edgeDetector", without_noise, 0.0008, 0.001)
 #ui.show(edges)
 scifio.datasetIO().save(datasets.create(ops.convert().uint8(ops.math().multiply(edges, 255))), output_path)
 
-Measure.end("total_op", start)
+Measure.end(start)
 print("OK")
