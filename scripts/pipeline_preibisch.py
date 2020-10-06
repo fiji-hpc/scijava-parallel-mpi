@@ -28,7 +28,7 @@ input_dataset = None
 
 edges = ops.run("edgeDetector", without_noise, 0.0008, 0.001)
 #ui.show(edges)
-scifio.datasetIO().save(datasets.create(ops.convert().uint8(ops.math().multiply(edges, 255))), output_path)
+scifio.datasetIO().save(datasets.create(ops.convert().uint8(ops.math().multiply(edges, FloatType(255)))), output_path)
 
 Measure.end(start)
 print("OK")
