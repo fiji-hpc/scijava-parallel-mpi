@@ -4,9 +4,9 @@
 #@ String output_path
 #@ UIService ui
 #@ DatasetService datasets
-#@ float (value=3) sigma
-#@ float (value=0.0005) low_threshold
-#@ float (value=0.001) high_threshold
+#@ Double (value=3, persist=false) sigma
+#@ Double (value=0.0005, persist=false) low_threshold
+#@ Double (value=0.001, persist=false) high_threshold
 
 print(sigma, low_threshold, high_threshold)
 
