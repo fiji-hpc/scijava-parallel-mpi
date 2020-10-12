@@ -44,7 +44,7 @@ public class MPIMinMax<I extends RealType<I>> extends AbstractUnaryFunctionOp<It
                 1,
                 MPIUtils.MPI_DOUBLE,
                 MPIUtils.MPI_OP_MIN,
-                MPIUtils.MPI_COMM_WORLD
+                MPIUtils.currentComm
         );
 
         MPIUtils.Allreduce(
@@ -53,7 +53,7 @@ public class MPIMinMax<I extends RealType<I>> extends AbstractUnaryFunctionOp<It
                 1,
                 MPIUtils.MPI_DOUBLE,
                 MPIUtils.MPI_OP_MAX,
-                MPIUtils.MPI_COMM_WORLD
+                MPIUtils.currentComm
         );
 
         final I min = input.cursor().get().createVariable();

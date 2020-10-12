@@ -23,7 +23,7 @@ public class ShortArrayTransfer extends ArrayTransfer<GenericShortType> {
 
     @Override
     public void transfer(int root) {
-        MPIUtils.MPILibrary.INSTANCE.MPI_Bcast(array, limit(), MPIUtils.MPI_UNSIGNED_SHORT, root, MPIUtils.MPI_COMM_WORLD);
+        MPIUtils.MPILibrary.INSTANCE.MPI_Bcast(array, limit(), MPIUtils.MPI_UNSIGNED_SHORT, root, MPIUtils.currentComm);
     }
 
     @Override

@@ -23,7 +23,7 @@ public class DoubleArrayTransfer extends ArrayTransfer<DoubleType> {
 
     @Override
     public void transfer(int root) {
-        MPIUtils.MPILibrary.INSTANCE.MPI_Bcast(array, limit(), MPIUtils.MPI_DOUBLE, root, MPIUtils.MPI_COMM_WORLD);
+        MPIUtils.MPILibrary.INSTANCE.MPI_Bcast(array, limit(), MPIUtils.MPI_DOUBLE, root, MPIUtils.currentComm);
     }
 
     @Override

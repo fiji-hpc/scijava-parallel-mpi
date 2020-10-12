@@ -21,6 +21,7 @@ public class MPIUtils {
     public static Pointer MPI_OP_SUM;
 
     public static Pointer MPI_COMM_WORLD;
+    public static Pointer currentComm;
 
     private static NativeLibrary mpilib;
     static {
@@ -52,6 +53,7 @@ public class MPIUtils {
                 throw new RuntimeException(e);
             }
         }
+        currentComm = MPI_COMM_WORLD;
     }
 
     public static void Finalize() {
@@ -62,20 +64,31 @@ public class MPIUtils {
         }
     }
 
+    public static void split(int color, int key) {
+        Pointer newcomm = new Memory(8 /* TODO: Pointer.SIZE */);
+        PointerByReference ptr = new PointerByReference(newcomm);
+        checkMpiResult(MPILibrary.INSTANCE.MPI_Comm_split(MPI_COMM_WORLD, color, key, ptr));
+        currentComm = ptr.getValue();
+    }
+
+    public static void setCommWorld() {
+        currentComm = MPI_COMM_WORLD;
+    }
+
     public static int getSize() {
         int[] rank = new int[1];
-        checkMpiResult(MPILibrary.INSTANCE.MPI_Comm_size(MPI_COMM_WORLD, rank));
+        checkMpiResult(MPILibrary.INSTANCE.MPI_Comm_size(currentComm, rank));
         return rank[0];
     }
 
     public static int getRank() {
         int[] rank = new int[1];
-        checkMpiResult(MPILibrary.INSTANCE.MPI_Comm_rank(MPI_COMM_WORLD, rank));
+        checkMpiResult(MPILibrary.INSTANCE.MPI_Comm_rank(currentComm, rank));
         return rank[0];
     }
 
     public static void barrier() {
-        checkMpiResult(MPILibrary.INSTANCE.MPI_Barrier(MPI_COMM_WORLD));
+        checkMpiResult(MPILibrary.INSTANCE.MPI_Barrier(currentComm));
     }
 
     public static String getProcessorName() {
@@ -132,7 +145,7 @@ public class MPIUtils {
                 1,
                 mpiType,
                 toOP(op),
-                MPIUtils.MPI_COMM_WORLD
+                MPIUtils.currentComm
         );
         checkMpiResult(ret);
 
@@ -180,6 +193,7 @@ public class MPIUtils {
         int MPI_Recv(long buf, int count, Pointer datatype, int dest, int tag, Pointer comm, Pointer status);
         int MPI_Ibcast(Memory buffer, int count, Pointer datatype, int root, Pointer comm, PointerByReference request);
         int MPI_Waitall(int count, Pointer[] requests, Pointer[] statuses);
+        int MPI_Comm_split(Pointer comm, int color, int key, PointerByReference newcomm);
 
         int MPI_Bcast(float[] buffer, int count, Pointer datatype, int root, Pointer comm);
         int MPI_Bcast(double[] buffer, int count, Pointer datatype, int root, Pointer comm);

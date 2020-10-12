@@ -23,7 +23,7 @@ public class FloatArrayTransfer extends ArrayTransfer<FloatType> {
 
     @Override
     public void transfer(int root) {
-        MPIUtils.MPILibrary.INSTANCE.MPI_Bcast(array, limit(), MPIUtils.MPI_FLOAT, root, MPIUtils.MPI_COMM_WORLD);
+        MPIUtils.MPILibrary.INSTANCE.MPI_Bcast(array, limit(), MPIUtils.MPI_FLOAT, root, MPIUtils.currentComm);
     }
 
     @Override

@@ -23,7 +23,7 @@ public class ByteArrayTransfer extends ArrayTransfer<GenericByteType> {
 
     @Override
     public void transfer(int root) {
-        MPIUtils.MPILibrary.INSTANCE.MPI_Bcast(array, limit(), MPIUtils.MPI_BYTE, root, MPIUtils.MPI_COMM_WORLD);
+        MPIUtils.MPILibrary.INSTANCE.MPI_Bcast(array, limit(), MPIUtils.MPI_BYTE, root, MPIUtils.currentComm);
     }
 
     @Override

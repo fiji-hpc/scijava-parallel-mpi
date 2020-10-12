@@ -23,7 +23,7 @@ public class LongArrayTransfer extends ArrayTransfer<LongType> {
 
     @Override
     public void transfer(int root) {
-        MPIUtils.MPILibrary.INSTANCE.MPI_Bcast(array, limit(), MPIUtils.MPI_UNSIGNED_LONG, root, MPIUtils.MPI_COMM_WORLD);
+        MPIUtils.MPILibrary.INSTANCE.MPI_Bcast(array, limit(), MPIUtils.MPI_UNSIGNED_LONG, root, MPIUtils.currentComm);
     }
 
     @Override

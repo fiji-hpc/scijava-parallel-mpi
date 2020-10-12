@@ -83,7 +83,7 @@ public class Measure {
 
     public static <T> T benchmark(Supplier<T> cb, int rounds) {
         for(int round = 0; round < rounds; round++) {
-            MPIUtils.MPILibrary.INSTANCE.MPI_Barrier(MPIUtils.MPI_COMM_WORLD);
+            MPIUtils.barrier();
             Utils.print("Round " + round + " started at " + new Date());
             if(round + 1 == rounds) {
               return measureCatch("total_op", cb);

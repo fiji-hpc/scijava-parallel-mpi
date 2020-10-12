@@ -23,7 +23,7 @@ public class IntArrayTransfer extends ArrayTransfer<GenericIntType> {
 
     @Override
     public void transfer(int root) {
-        MPIUtils.MPILibrary.INSTANCE.MPI_Bcast(array, limit(), MPIUtils.MPI_UNSIGNED, root, MPIUtils.MPI_COMM_WORLD);
+        MPIUtils.MPILibrary.INSTANCE.MPI_Bcast(array, limit(), MPIUtils.MPI_UNSIGNED, root, MPIUtils.currentComm);
     }
 
     @Override

@@ -115,7 +115,7 @@ public class NonBlockingBroadcast {
             PointerByReference ptr = new PointerByReference();
             int ret = MPIUtils.MPILibrary.INSTANCE.MPI_Ibcast(
                     memory,
-                    (int) totalElements, getMPIType(), root, MPIUtils.MPI_COMM_WORLD, ptr);
+                    (int) totalElements, getMPIType(), root, MPIUtils.currentComm, ptr);
 
             if(ret != 0) {
                 throw new RuntimeException("mpi failed");
