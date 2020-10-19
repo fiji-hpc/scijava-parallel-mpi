@@ -34,7 +34,8 @@ public class Measure {
 
         String desc = StringUtils.join(path, ";");
         path.remove(path.size() - 1);
-        System.out.println(desc + ": " + time_ms / 1000.0 + "s");
+
+        //System.out.println(desc + ": " + time_ms / 1000.0 + "s");
 
         int round = Measure.round;
         if(System.getenv("B_CURRENT_ROUND") != null) {
@@ -84,14 +85,14 @@ public class Measure {
     public static <T> T benchmark(Supplier<T> cb, int rounds) {
         for(int round = 0; round < rounds; round++) {
             MPIUtils.barrier();
-            Utils.print("Round " + round + " started at " + new Date());
+            //Utils.print("Round " + round + " started at " + new Date());
             if(round + 1 == rounds) {
               return measureCatch("total_op", cb);
             }
 
             measureCatch("total_op", cb);
 
-            Utils.print("Round " + round + " finished at " + new Date());
+            //Utils.print("Round " + round + " finished at " + new Date());
             Measure.nextRound();
             System.gc();
         }

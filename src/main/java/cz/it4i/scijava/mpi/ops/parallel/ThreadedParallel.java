@@ -36,7 +36,7 @@ public class ThreadedParallel<O> extends AbstractNullaryComputerOp<IterableInter
         for(Future<?> future: futures) {
             try {
                 future.get();
-                Utils.print("Job finished at " + new Date());
+                //Utils.print("Job finished at " + new Date());
             } catch (InterruptedException | ExecutionException e) {
                 e.printStackTrace();
             }

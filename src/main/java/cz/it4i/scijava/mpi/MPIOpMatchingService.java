@@ -16,7 +16,7 @@ public class MPIOpMatchingService extends DefaultOpMatchingService {
     @Override
     public OpCandidate findMatch(OpEnvironment ops, List<OpRef> refs) {
         OpCandidate candidate = super.findMatch(ops, refs);
-        System.out.println("OP: " + candidate.getModule());
+        this.log().debug("OP: " + candidate.getModule());
         return candidate;
     }
 
