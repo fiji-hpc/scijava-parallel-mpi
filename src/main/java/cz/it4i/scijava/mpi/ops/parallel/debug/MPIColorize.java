@@ -61,7 +61,7 @@ public class MPIColorize<I extends UnsignedByteType, O extends UnsignedByteType>
             Gcin.jumpFwd(offset);
             Bcin.jumpFwd(offset);
 
-            int color = colors[MPIUtils.getRank()];
+            int color = colors[MPIUtils.getRank() % colors.length];
 
             while (Rc.hasNext()) {
                 Rc.get().set(Math.min(255, Rcin.get().get() + ((color & 0xFF0000) >> 16)));// + (color & 0xFF0000) >> 16);
