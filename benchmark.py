@@ -7,15 +7,16 @@ import tempfile
 import time
 import argparse
 import hashlib
+import time
 
-ROUNDS = 10
+ROUNDS = 1
 MPI_ARGS = shlex.split("--bind-to none --tag-output --timestamp-output --merge-stderr-to-stdout")
 DIR = os.path.dirname(os.path.realpath(__file__))
 OUTPUT_DIR = os.path.join(DIR, "run", "benchmark")
 INPUT_DIR = os.path.join(DIR, "run", "datasets")
 
 class Benchmark:
-    def __init__(self, op, method, dataset, rank_size, suffix='', env=None):
+    def __init__(self, op, method, dataset, rank_size, suffix='', env=None, output_suffix=None, check_stat='total_op'):
         self.op = op
         self.method = method
         self.dataset = dataset
@@ -24,6 +25,10 @@ class Benchmark:
         self.env = env
         if not self.env:
             self.env = {}
+        if not output_suffix:
+          output_suffix = '.tif'
+        self.output_suffix = output_suffix
+        self.check_stat = check_stat
         self.columns = ['stat', 'rank', 'size', 'round', 'time_ms']
 
     @property
@@ -55,12 +60,13 @@ class Benchmark:
         except FileNotFoundError:
             return missing_runs, set()
 
-        x = d[d['stat'] == 'total_op'].groupby(['round'])['stat'].count()
+        x = d[d['stat'] == self.check_stat].groupby(['round'])['stat'].count()
         for run, measurements in x.iteritems():
             if measurements != self.rank_size:
                 corrupted_runs.add(run)
             else:
-                missing_runs.remove(run)
+                if run in missing_runs:
+                  missing_runs.remove(run)
 
 
         return missing_runs, corrupted_runs
@@ -93,6 +99,7 @@ class Benchmark:
         fire_event("benchmark_started", self, run)
         start = time.time()
         with tempfile.TemporaryDirectory(dir=OUTPUT_DIR) as tempdir:
+            print(">>>>>>>>>>>>>>>>>>>>>>>"+tempdir)
             stats_path = os.path.join(tempdir, 'benchmark.csv')
             errors, output = self.run_fiji(stats_path)
 
@@ -103,7 +110,7 @@ class Benchmark:
                             merged.write(f.read())
 
             data = pandas.read_csv(stats_path, names=self.columns)
-            op_data = data[data['stat'] == 'total_op']
+            op_data = data[data['stat'] == self.check_stat]
             if len(op_data) != self.rank_size:
                 errors.append(f'wrong num of measurements: {len(op_data)} != {self.rank_size}')
 
@@ -142,6 +149,8 @@ class Benchmark:
         elif self.method != 'mpi':
             raise Exception(f"Unknown method: {self.method}")
 
+        usec = int(time.time())
+        output_file = self.output_suffix.format(**locals())
         cmd = list(map(str, [
             "mpirun",
             *MPI_ARGS,
@@ -149,7 +158,7 @@ class Benchmark:
             os.path.expanduser("~/Fiji.app/ImageJ-linux64"),
             "--ij2", "--headless",
             "--run", f"{DIR}/scripts/{script}.py",
-            f"input_path=\"{INPUT_DIR}/{self.dataset}.tif\",output_path=\"{OUTPUT_DIR}/{self.name}.{self.rank_size}.tif\",rounds=\"1\""
+            f"input_path=\"{INPUT_DIR}/{self.dataset}.tif\",output_path=\"{OUTPUT_DIR}/{self.name}.{self.rank_size}{output_file}\",rounds=\"1\""
         ]))
 
         with open(os.path.join(OUTPUT_DIR, f"{self.name}.out"), "a") as f:
@@ -186,7 +195,7 @@ class All:
         self.benchmarks = []
         self.checksum_path = os.path.join(OUTPUT_DIR, "checksum")
 
-    def add(self, op, methods, datasets, ranks, suffix='', env=None):
+    def add(self, op, methods, datasets, ranks, **kwargs):
         for method in methods:
             for dataset in datasets:
                 for rank in ranks:
@@ -197,8 +206,7 @@ class All:
                         method=method,
                         dataset=dataset,
                         rank_size=rank,
-                        suffix=suffix,
-                        env=env,
+                        **kwargs
                     ))
 
     def benchmark_remaining(self, nodes, **kwargs):
@@ -303,6 +311,7 @@ parser.add_argument('--op', type=lambda s: s.split(','))
 parser.add_argument('--method', type=lambda s: s.split(','))
 cmdsparser = parser.add_subparsers(dest='action')
 subparser = cmdsparser.add_parser('status')
+subparser = cmdsparser.add_parser('prune')
 subparser = cmdsparser.add_parser('benchmark')
 subparser.add_argument('--dry-run', action='store_true')
 subparser.add_argument('--nodes', required=True, type=int)
@@ -321,6 +330,27 @@ def datasets(fmt, nums):
   return [fmt.format(i=i) for i in nums]
 
 b = All()
+b.add(
+    op='pipeline_preibisch',
+    methods=['mpi'],
+    ranks=even_nodes(8) + [16, 32],
+    datasets=['preibisch-data/n25'],
+)
+"""
+b.add(
+    op='pipeline_preibisch',
+    methods=['mpi'],
+    ranks=even_nodes(8),
+    datasets=['preibisch-data/n600-625'],
+)
+b.add(
+    op='pipeline_preibisch',
+    methods=['mpi'],
+    ranks=even_nodes(8),
+    datasets=['preibisch-data/nall25'],
+)
+"""
+"""
 b.add(
     op='convolution',
     methods=['mpi'],
@@ -365,10 +395,39 @@ b.add(
     datasets=datasets('test_2048x2048x{i}', [10, 50, 100, 500, 1000]),
 )
 
+b.add(
+    op='canny',
+    methods=['mpisingle', 'mpi'],
+    datasets=['fused_tp0_ch0+ch1_v2', 'fused_big'],
+    ranks=[1, 2, 4, 6, 8],
+    check_stat='edgeDetector',
+)
+#    datasets=['fused_tp0_ch0+ch1_v2', 'fused_xyztc-movie-01'],
+"""
+
+#b.add(
+#    op='stats',
+#    methods=['mpi', 'mpisingle'],
+#    ranks=[1, 2, 4, 6, 8],
+#    datasets=datasets('test_2048x2048x{i}x{i}x{i}', [1] + list(range(2, 10, 2))),
+#    output_suffix=".{usec}.result",
+#    check_stat='net.imagej.ops.Ops.Stats.Variance',
+#)
+
+pandas.set_option('display.max_rows', 100)
+
 if args.action == 'benchmark':
     b.benchmark_remaining(**vars(args))
 elif args.action == 'status':
     b.status(**vars(args))
+elif args.action == 'prune':
+    import glob
+    for f in glob.glob("run/benchmark/add*x1000_mpi.csv"):
+      names = ['stat', 'rank', 'size', 'round', 'time_ms']
+
+      data = pandas.read_csv(f, names=names)
+      data = data[(data['size'] != 4)]
+      data.to_csv(f, header=False, index=False)
 else:
   print("unknown action")
 
