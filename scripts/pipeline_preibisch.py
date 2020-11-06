@@ -14,6 +14,8 @@ from cz.it4i.scijava.mpi import Measure
 from net.imglib2.type.numeric.real import FloatType
 from net.imglib2.type.numeric.integer import UnsignedByteType
 from net.imglib2.view import Views
+from io.scif.config import SCIFIOConfig
+from io.scif.formats.tiff import IFD
 
 start = Measure.start("total_op")
 input_dataset = scifio.datasetIO().open(input_path)
@@ -33,7 +35,9 @@ input_dataset = None
 
 edges = ops.run("edgeDetector", without_noise, low_threshold, high_threshold)
 #ui.show(edges)
-scifio.datasetIO().save(datasets.create(ops.convert().uint8(ops.math().multiply(edges, FloatType(255)))), output_path)
+config = SCIFIOConfig().writerSetFailIfOverwriting(False)
+config[IFD.BIG_TIFF] = True
+scifio.datasetIO().save(datasets.create(ops.convert().uint8(ops.math().multiply(edges, FloatType(255)))), output_path, config)
 
 Measure.end(start)
 print("OK")
