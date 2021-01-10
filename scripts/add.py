@@ -3,19 +3,23 @@
 #@ String input_path
 #@ String output_path
 #@ UIService ui
-#@ int rounds
+#@ DatasetService datasets
 
-from cz.it4i.scijava.mpi import Measure
+import os
 
-def fn():
-	output = ops.create().img(input)
-	scalar = output.firstElement().createVariable()
-	scalar.setReal(100)
-	ops.math().add(output, input, scalar)
-	return output
+try:
+	os.unlink(output_path)
+except OSError:
+	pass
 
 input = scifio.datasetIO().open(input_path)
-output = Measure.benchmark(fn, rounds)
-scifio.datasetIO().save(output, output_path)
-#ui.show(output)
+output = ops.create().img(input)
+
+
+scalar = output.firstElement().createVariable()
+scalar.setReal(100)
+ops.math().add(output, input, scalar)
+
+scifio.datasetIO().save(datasets.create(output), output_path)
+ui.show(output)
 print("OK")

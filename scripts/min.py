@@ -3,14 +3,8 @@
 #@ String input_path
 #@ String output_path
 #@ UIService ui
-#@ int rounds
-
-from cz.it4i.scijava.mpi import Measure
-
-def fn():
-	return ops.stats().minMax(input)
 
 input = scifio.datasetIO().open(input_path)
-output = Measure.benchmark(fn, rounds)
+output = ops.stats().minMax(input)
 print("Min: {}, Max: {}".format(output.getA(), output.getB()))
 print("OK")

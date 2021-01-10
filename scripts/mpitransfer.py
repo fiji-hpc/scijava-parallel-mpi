@@ -3,16 +3,17 @@
 #@ String input_path
 #@ String output_path
 #@ UIService ui
-#@ int rounds
+#@ DatasetService datasets
 
-from net.imglib2.algorithm.neighborhood import RectangleShape
-from cz.it4i.scijava.mpi import Measure
-from cz.it4i.scijava.mpi import MPIUtils
+import os
 
-def fn():
-	return ops.run("mpi.transferBenchmark", input)
+try:
+	os.unlink(output_path)
+except OSError:
+	pass
 
 input = scifio.datasetIO().open(input_path)
-output = Measure.benchmark(fn, rounds)
-scifio.datasetIO().save(output, output_path)
+output = ops.run("mpi.transferBenchmark", input)
+scifio.datasetIO().save(datasets.create(output), output_path)
+ui.show(output)
 print("OK")
