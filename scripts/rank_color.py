@@ -1,8 +1,10 @@
 #@ OpService ops
 #@ SCIFIO scifio
+#@ DatasetService datasets
 #@ String input_path
+#@ String output_path
 
-import os
+
 from net.imglib2.type.numeric.real import FloatType
 from net.imglib2.view import Views
 
@@ -15,6 +17,5 @@ output = ops.create().img(input)
 # color image with MPI ranks
 ops.run('mpi.rankColor', output, input)
 
-output_path = os.path.join(os.getcwd(), "output" + os.path.splitext(input_path)[-1])
-scifio.datasetIO().save(output, output_path)
-print("Output saved to: " + output_path)
+scifio.datasetIO().save(datasets.create(output), output_path)
+print("OK")
