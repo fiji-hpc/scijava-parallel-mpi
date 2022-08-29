@@ -22,6 +22,8 @@ public class MPIUtils {
 
     public static Pointer MPI_COMM_WORLD;
     public static Pointer currentComm;
+    
+  	private static Pointer MPI_THREAD_MULTIPLE;
 
     private static NativeLibrary mpilib;
     static {
@@ -40,7 +42,9 @@ public class MPIUtils {
         int[] isInitialized = new int[1];
         checkMpiResult(MPILibrary.INSTANCE.MPI_Initialized(isInitialized));
         if(isInitialized[0] == 0){
-            checkMpiResult(MPILibrary.INSTANCE.MPI_Init(null, null));
+        	int[] provided = new int[1];
+    			checkMpiResult(MPILibrary.INSTANCE.MPI_Init_thread(null, null,
+    				MPI_THREAD_MULTIPLE, provided));
         }
         for(Field f: MPIUtils.class.getDeclaredFields()) {
             if(!f.getName().startsWith("MPI_")) {
@@ -179,7 +183,8 @@ public class MPIUtils {
                            Pointer comm);
         int MPI_Initialized(int[] flag);
         int MPI_Finalized(int[] flag);
-        int MPI_Init(Pointer argv, Pointer argc);
+        int MPI_Init_thread(Pointer argv, Pointer argc, Pointer required,
+    			int[] provided);
         int MPI_Finalize();
         int MPI_Comm_rank(Pointer comm, int[] rank);
         int MPI_Comm_size(Pointer comm, int[] size);
